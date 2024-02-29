@@ -3,7 +3,7 @@ disp("It has begun")
 %processing_simulation('trajectory_dataset_name','testing_if_dataset_generation_works_with_parser','circles',1,'interpolations',1)
 
 %processing_simulation('testing_if_dataset_generation_works_with_parser',1,250,1,333,0,255,[1,9,11],'lol',0.89,0.90,1,1,2,'testmodel','testbase','testfollower','testtargetIDs','testoutputIDs','testguessesIDs',[1,1,1,1,1,1],1020)
-processing_simulation('testing_if_dataset_generation_works_with_parser','circles',1,'lines',1,'interpolations',1)
+processing_simulation('testing_if_dataset_generation_works_with_parser','circles',1,'lines',1,'interpolations',1,'training',1)
 
 
 
@@ -36,6 +36,8 @@ function []= processing_simulation(varargin)
     addOptional(p, 'outputIDs', ["j1.Rz.q";"j2.Rz.q";"j3.Rz.q";"j4.Rz.q";"j5.Rz.q"], @(x) ischar(x) || isstring(x));  
     addOptional(p, 'guessesIDs', ["j1.Rz.q";"j2.Rz.q";"j3.Rz.q";"j4.Rz.q";"j5.Rz.q"], @(x) ischar(x) || isstring(x)); 
     addOptional(p, 'guesses', [3,3,3,3,3], @isnumeric);  
+    addOptional(p, 'training', 0, @isnumeric);
+    addOptional(p, 'trained_AI_model','rain_predict_lstm.m', @(x) ischar(x) || isstring(x));
     %%% PAS ENCORE PLEINEMENT FONCTIONNEL, N AFFECTE QUE INTERPOLATION POUR L INSTANT
     addOptional(p, 'nb_points_traj', 1000, @isnumeric);
     
@@ -58,7 +60,13 @@ function []= processing_simulation(varargin)
     motorerrorselection = p.Results.selection_erreures_moteur;
     %fprintf('Les erreures moteur seront : %d m.\n',motorerrorselection);
     fprintf('Les erreures moteur seront : [%s%d]\n', sprintf('%d,', motorerrorselection(1:end-1)),motorerrorselection(end));
-   
+    training = p.Results.training;
+    fprintf('Il y aura entrainement Y/N: %d.\n',training);
+    trained_AI_model = p.Results.trained_AI_model;
+    if training
+        fprintf('Le modèle entrainé sera: %s.\n',trained_AI_model);
+    end
+
     %%déclaration globlale
     global model_name;
     model_name = p.Results.model_name;
@@ -720,6 +728,11 @@ function []= processing_simulation(varargin)
     % Now, cellArray is a cell array where each cell is a 6x1000 matrix
 
     %Running the rain_predict_file
+    if training 
+        disp('Running AI model')
+        run(trained_AI_model);
+        
+    end
     %run('rain_predict_lstm.m');
     %run("optimum_train_predict.m")
 
