@@ -13,13 +13,13 @@ motorerrorselection=[0,1,2,3,4,5,6,7,8,9,10,11,12];
 %Creating shape set
 
 %Most used options
-reduced_adapted_circle_set=CreateRandomCircleList(0.28, 0.28,200);
-reduced_adapted_line_set=CreateRandomLineList(0.28, 0.28,200);
-firsttype=1;
+%reduced_adapted_circle_set=CreateRandomCircleList(0.28, 0.28,200);
+%reduced_adapted_line_set=CreateRandomLineList(0.28, 0.28,200);
+%firsttype=1;
 reduced_adapted_interpolate_set= createInterpolate(200, 1000);
 %secondtype=True
 secondtype=1;
-reduced_adapted_shape_set=mergeStructures(reduced_adapted_circle_set,reduced_adapted_line_set);
+%reduced_adapted_shape_set=mergeStructures(reduced_adapted_circle_set,reduced_adapted_line_set);
 
  % adapted_circle_set=CreateCircleList(0.28, 0.28);
  % adapted_line_set=CreateLineList(0.28, 0.28);
@@ -315,6 +315,7 @@ if firsttype
             j4o = j4o*180/pi;
             j5o = j5o*180/pi;
     
+            output_j1o_after_sim = j1o;
             disp(size(j1o))
             [x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series); 
             jdatapoint = [x, y, z];
@@ -561,7 +562,8 @@ if secondtype
             j3o = j3o*180/pi;
             j4o = j4o*180/pi;
             j5o = j5o*180/pi;
-    
+
+            output_j1o_after_sim = j1o;
            
             [x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series); 
             jdatapoint = [x, y, z];%pour un j donné on met à la suite les len_time_series prédit  et les réels en prenant en compte le défault moteur, c'est ce qu'on donnera à manger à l'IA;
@@ -988,7 +990,7 @@ function [interpolated_set] = createInterpolate(numberofinterpolatedshapes,len_t
     
     for p = 1:numberofinterpolatedshapes
         thisshape=struct();
-        num_point = randi([3, 10]); % number of point for interpolation
+        num_point = randi([3, 4]); % number of point for interpolation
         m = (max_eloignement_point - min_eloignement_point) * rand(3, num_point) + min_eloignement_point;
     
         %verification of sufficient Z value
