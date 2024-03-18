@@ -311,7 +311,16 @@ for j=0:0
     j4o = j4o*180/pi;
     j5o = j5o*180/pi;
 
+
+    j1_real =  (mov_6-500)*0.24;
+j2_real = (mov_5-500)*0.24;
+j3_real = (mov_4-500)*0.24;
+j4_real = (mov_3-500)*0.24;
+j5_real = (mov_2 -500)*0.24;
+
     [comparison_matrix, x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series); 
+    [comparison_matrix_target, x_target, y_target, z_target] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series); 
+    [comparison_matrix_real, x_real, y_real, z_real] = ForwardKinematic(j1_real, j2_real, j3_real, j4_real, j5_real,len_time_series); 
     matrix = comparison_matrix
     j1o = j1o/0.24 + 500;
     j2o = j2o/0.24 + 500;
@@ -340,6 +349,10 @@ plot(x, position_degree_resampled-120, 'g-', 'LineWidth', 2);
 xlabel('X-axis');
 ylabel('Y-axis');
 title('Plot of Real and Target Coordinates');
+
+
+
+
 
 function [comparison_matrix, x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series)
     joint1_damping = 0;
