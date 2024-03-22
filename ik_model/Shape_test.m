@@ -1,4 +1,28 @@
+%% Blurb for readme
 
+%This function uses real provided data (command and response trajectory) in
+%order to 1 - adapt for use with our AI models (real_datapoint output) and 
+% 2- generate a simulated response to the real command, allowing direct
+% comparison to the real datapoint in order to access digital twin
+% accuracy.
+%This function can also be switched to a "3D" mode, in which 
+
+%%
+
+
+
+
+
+
+
+% these are placeholder points, with no impact on the simulation unless
+% use_case is set to "3D" trajectry control, rather than "5D" motor
+% control
+
+use_case = "5D"
+
+
+interp_points = load('target_traj.csv')
 len_time_series=1000;
 %% preparing data for full trajectory test
 
@@ -20,21 +44,7 @@ df_cmd_deg = df_cmd{:, 2:end} / 1000 * 240;
 
 %% Commands 
 
-%commands from real traj
-% com_motor_6 = interp1(1:numel(trajectory_monitoring_position.motor_6), trajectory_monitoring_position.motor_6, linspace(1, numel(trajectory_monitoring_position.motor_6), 1000));
-% com_motor_5 = interp1(1:numel(trajectory_monitoring_position.motor_5), trajectory_monitoring_position.motor_5, linspace(1, numel(trajectory_monitoring_position.motor_5), 1000));
-% com_motor_4 = interp1(1:numel(trajectory_monitoring_position.motor_4), trajectory_monitoring_position.motor_4, linspace(1, numel(trajectory_monitoring_position.motor_4), 1000));
-% com_motor_3 = interp1(1:numel(trajectory_monitoring_position.motor_3), trajectory_monitoring_position.motor_3, linspace(1, numel(trajectory_monitoring_position.motor_3), 1000));
-% com_motor_2 = interp1(1:numel(trajectory_monitoring_position.motor_2), trajectory_monitoring_position.motor_2, linspace(1, numel(trajectory_monitoring_position.motor_2), 1000));
 
-%commands from targets
-% com_motor_6 =  reshape(repmat(trajectory_monitoring_cmd.motor_6, 1, 1000/8).',1,[]);
-% com_motor_5 =  reshape(repmat(trajectory_monitoring_cmd.motor_5, 1, 1000/8).',1,[]);
-% com_motor_4 =  reshape(repmat(trajectory_monitoring_cmd.motor_4, 1, 1000/8).',1,[]);
-% com_motor_3 =  reshape(repmat(trajectory_monitoring_cmd.motor_3, 1, 1000/8).',1,[]);
-% com_motor_2 =  reshape(repmat(trajectory_monitoring_cmd.motor_2, 1, 1000/8).',1,[]);
-
- 
 [com_motor_6, mov_6] =  generate_positions(df, df_cmd, df_cmd_duration, ['motor_' num2str(6)]);
 [com_motor_5,mov_5 ]=  generate_positions(df, df_cmd, df_cmd_duration, ['motor_' num2str(5)]);
 [com_motor_4, mov_4] =  generate_positions(df, df_cmd, df_cmd_duration, ['motor_' num2str(4)]);
@@ -59,124 +69,9 @@ max_speed =2.7;  %empirical value 2.2642; %degrees per point, i.e. 10ms
 % delay = 20; %delay in tens of ms between command and action in the real system
 % delay5= 0;
  %bloc for motor tuning
-vector = 0.01*rand(1000, 1);
-x = vector;
-y = vector;
-z = vector;
-x=x+0.11;
-y=y+0.11;
-z=z+0.01;
 
 
 
-
-
-
-
-
-
-%% we need to load data from the csv here
-dataTable = readtable('./ik_model/collected_data_motor_2_550.csv');
-timestamp = dataTable.timestamp;
-position_degree = dataTable.position_degree;
-command = dataTable.command;
-
-% Plot position_degree as a function of timestamp
-figure;
-plot(timestamp, position_degree, 'b-', 'LineWidth', 2);
-xlabel('Timestamp');
-ylabel('Position Degree');
-title('Position Degree vs. Timestamp');
-
-% Plot command as a function of timestamp
-figure;
-plot(timestamp, command, 'r-', 'LineWidth', 2);
-xlabel('Timestamp');
-ylabel('Command');
-title('Command vs. Timestamp');
-
-%%  generating the equivalent targets
-
-j1_targets = zeros(size(command));
-
-% Variable to keep track of whether non-nil value has been encountered
-nonNilEncountered = false;
-
-% Iterate through the command list
-for i = 1:numel(command)
-    % If command is non-nil and non-nil has not been encountered before
-    if command(i) ~= 0 && ~nonNilEncountered
-        % Set j1_targets value to 12
-        j1_targets(i:end) = 12;
-        % Update non-nil encountered flag
-        nonNilEncountered = true;
-    % If command is non-nil and non-nil has been encountered before
-    elseif command(i) ~= 0 && nonNilEncountered
-        % Set j1_targets value to 0
-        j1_targets(i:end) = 0;
-    end
-end
-
-j1_targets = interp1(linspace(0, 1, numel(j1_targets)), j1_targets, linspace(0, 1, 1000))';
-position_degree_resampled = interp1(linspace(0, 1, numel(position_degree)), position_degree, linspace(0, 1, 1000))';
-command_from_real = round((position_degree_resampled-120)/12) * 12;
-new_targets = j1_targets-j1_targets(1);
-
-%% 
-
-
-
-
-datapoints =[x, y,z];
-
-
-
-
-% x= chosencell(4,:)';
-% y= chosencell(5,:)';
-% z= chosencell(6,:)';
-% sample_time=10/len_time_series;
-% %trajectoire CS
-% 
-% x = trajCS.x;
-% y = trajCS.y;
-% z = trajCS.z;
-% scaleFactorX = 3;
-% scaleFactorY = 3;
-% 
-% % Scaling the vectors
-% x_scaled = x * scaleFactorX;
-% y_scaled = y * scaleFactorY;
-% Plotting in 3D
-%figure;
-% plot3(x_scaled, y_scaled, z, 'o-');
-% plot3(x, y, z, 'o-');
-% grid on;
-% xlabel('X-axis');
-% ylabel('Y-axis');
-% zlabel('Z-axis');
-% title('3D Plot Example, what was done');
-
-% % Desired number of points
-% desiredPoints = len_time_series;
-% 
-% % Create indices for downsampling
-% indices = round(linspace(1, length(x), desiredPoints));
-% 
-% % Downsample the vectors
-% x_downsampled = x_scaled(indices);
-% y_downsampled = y_scaled(indices);
-% z_downsampled = z(indices)+0.05;
-% 
-% % Plotting downsampled in 3D
-% figure;
-% plot3(x_downsampled, y_downsampled, z_downsampled, 'o-');
-% grid on;
-% xlabel('X-axis');
-% ylabel('Y-axis');
-% zlabel('Z-axis');
-% title('3D Plot downsampleed');
-% 
 
 %Prepwork
 model_name = 'main3_armpi_fpv';
@@ -214,8 +109,22 @@ targets = zeros(len_time_series,3);
 m0=[transpose(1:len_time_series), zeros(len_time_series, 1)];
 m1=[transpose(1:len_time_series), ones(len_time_series, 1)];
 
+if use_case =="5D" 
+vector = 0.01*rand(1000, 1);
+x_placeholder = vector;
+y_placeholder = vector;
+z_placeholder = vector;
+x_placeholder=x_placeholder+0.11;
+y_placeholder=y_placeholder+0.11;
+z_placeholder=z_placeholder+0.01;
+datapoints =[x_placeholder, y_placeholder,z_placeholder];
 
+elseif use_case=="3D"
 datapoints = interp_points;
+end
+
+
+%% start of the simulation proper
 
  for t = 1:len_time_series
         datapoint =datapoints(t,:);
@@ -230,27 +139,25 @@ datapoints = interp_points;
     
 
         [outputVec,statusFlag] = solve(ik,datapoint,guesses);
-        % j1(t,1) = outputVec(1);
-        % j2(t,1) = outputVec(2);
-        % j3(t,1) = outputVec(3);
-        % j4(t,1) = outputVec(4);
-        % j5(t,1) = outputVec(5);
-        % 
-        % j1(t,1) = 0;
-        % j2(t,1) = 0;
-        % j3(t,1) = 0;
-        % j4(t,1) = 0;
-        % j5(t,1) = new_targets(t);
-        % 
-        
+
+        if use_case =="5D"
         j1(t,1) =  (com_motor_6(t)-500)*0.24;
         j2(t,1) =  (com_motor_5(t)-500)*0.24;
         j3(t,1) =  (com_motor_4(t)-500)*0.24;
         j4(t,1) =  (com_motor_3(t)-500)*0.24;
         j5(t,1) =  (com_motor_2(t)-500)*0.24;
-  
+        elseif use_case =="3D"
+        j1(t,1) = outputVec(1);
+        j2(t,1) = outputVec(2);
+        j3(t,1) = outputVec(3);
+        j4(t,1) = outputVec(4);
+        j5(t,1) = outputVec(5);
+        end
+
+        
+
  end
-  %%2.2642 = vitesse max
+
   
   j1 = process_points_capped_speed(j1, max_speed);
   j2 = process_points_capped_speed(j2, max_speed);
@@ -321,7 +228,10 @@ j5_real = (mov_2 -500)*0.24;
     [comparison_matrix, x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series); 
     [comparison_matrix_target, x_target, y_target, z_target] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series); 
     [comparison_matrix_real, x_real, y_real, z_real] = ForwardKinematic(j1_real, j2_real, j3_real, j4_real, j5_real,len_time_series); 
-    matrix = comparison_matrix
+   
+    real_datapoint = [comparison_matrix_target, comparison_matrix_real];
+    simulated_datapoint = [comparison_matrix_real, comparison_matrix];
+
     j1o = j1o/0.24 + 500;
     j2o = j2o/0.24 + 500;
     j3o = j3o/0.24 + 500;
@@ -338,26 +248,10 @@ j5_real = (mov_2 -500)*0.24;
 
 end
 
-
-x = 1:1000;
-figure;
-plot(x, j5o, 'b-', 'LineWidth', 2); % Plot real coordinates in blue
-hold on; % Keep the current plot and add new plots
-plot(x, new_targets, 'r-', 'LineWidth', 2); % Plot target coordinates in red
-plot(x, position_degree_resampled-120, 'g-', 'LineWidth', 2);
-% Add labels and title
-xlabel('X-axis');
-ylabel('Y-axis');
-title('Plot of Real and Target Coordinates');
-
-
-
-
-
 function [comparison_matrix, x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series)
     joint1_damping = 0;
     joint2_damping = 0;
-    damp_pince = 1000; % damping coefficient for joints of the pince
+    damp_pince = 1000; 
     
     
     mdl = "robot_model";
