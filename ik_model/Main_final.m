@@ -1,13 +1,25 @@
-disp("It has begun")
+disp("Code is Running")
 
-%processing_simulation('trajectory_dataset_name','testing_if_dataset_generation_works_with_parser','circles',1,'interpolations',1)
-
-%processing_simulation('testing_if_dataset_generation_works_with_parser',1,250,1,333,0,255,[1,9,11],'lol',0.89,0.90,1,1,2,'testmodel','testbase','testfollower','testtargetIDs','testoutputIDs','testguessesIDs',[1,1,1,1,1,1],1020)
-%processing_simulation('testing_if_dataset_generation_works_with_parser','circles',1,'lines',1,'interpolations',1,'training',1)
+%Current code runs here
 processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','gated_transformer_600_c_l_i_motorerror_0001020304_0123_1000.mat')
+%____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ 
+%____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________  
+%------------------
+%Tutorial examples:
+%------------------
+
+%Comment the line in Current code runs here 
+%Uncomment the lines that you want to run then run the file
 
 
+%Generating examples of simulated trajectory datasets: 
+%-----------------------------------------------------
 
+% Circles: 10/ motors:1 / error types: normal/off/
+%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_circles_100_motors1234_errors_000102030405','circles',1,''circle_number'',10)
+
+%____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ 
+%____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________  
 function []= processing_simulation(varargin)
     %Parsing the intput arguments to enable the setup of default values
     
