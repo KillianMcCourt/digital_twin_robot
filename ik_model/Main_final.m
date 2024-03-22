@@ -1,7 +1,7 @@
 disp("Code is Running")
 
-%Current code runs here
-processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','gated_transformer_600_c_l_i_motorerror_0001020304_0123_1000.mat')
+%Current code runs here, choose your options:
+processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat')
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ 
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________  
 %------------------
@@ -12,22 +12,143 @@ processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100Ne
 %Uncomment the lines that you want to run then run the file
 
 
-%Generating examples of simulated trajectory datasets: 
+%Examples of simulated trajectory dataset generation: 
 %-----------------------------------------------------
 
 % Circles: 10/ motors:1 / error types: normal/off/
-%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_circles_100_motors1234_errors_000102030405','circles',1,''circle_number'',10)
+%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_circles_10_motors1_errors_0001','circles',1,''circle_number'',10,'selection_erreures_moteur'[0,1])
+
+% Lines: 5/ motors:1,3 / error types: normal/off/stutter/lag/speed-cap/steady-state
+%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_lines_5_motors13_errors_000102030405','lines',1,'line_number',5,'selection_erreures_moteur'[0,1,3,4,6,7,9,11,13,15])
+
+% Lines: 1, Interpolations: 1 / motors:1,2,3 / error types: normal/stutter/lag/steady-state
+%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_lines_1_interpolations_1_motors123_errors_00020305','lines',1,'line_number',1,'interpolations',1,'interpolation_number',1,'selection_erreures_moteur'[0,4,5,6,7,8,9,13,14,15])
+
+
+%Examples of training a given AI model with a given dataset: 
+%----------------------------------------------------------------------
+
+%Used dataset:'premade_example_trajectory_dataset_interpolations_5_motors1_errors_0001'(this small example dataset comes already generated with the
+%git normally, training anything with this small amount of data is amibitious)
+%Name of the file that stores model architecture: 'rain_predict_lstm.m'
+%(default value)
+%Name of the model that will be trained: 'example_bi_lstm_5_i_motorerror_0001_1_1000.mat'
+%processing_simulation(0,'training',1,'trajectory_dataset_name','premade_example_trajectory_dataset_interpolations_5_motors1_errors_0001', 'name_trained_AI_model','example_bi_lstm_5_i_motorerror_0001_1_1000.mat')
+
+
+%Examples of simulated trajectory dataset generation then training a given
+%---------------------------------------------------------------------------------------------------------
+%AI model this dataset datasets: (classical use of this file)
+%---------------------------------------------------------------------------------------------------------
+
+%Lines: 100, Circles:100, Interpolations: 100 (default values used) / motors:1,2,3 / error types: normal/off/stutter/lag/speed-cap/steady-state
+%Name of the file that stores model architecture: 'rain_predict_lstm.m'
+%(default value)
+%Name of the model that will be trained: 'example_bi_lstm_300_c_l_i_motorerror_000102030405_0123_1000.mat'
+%processing_simulation(1,'training',1,'trajectory_dataset_name','example_trajectory_dataset_lines_100_circles_100_interpolations_100_motors123_errors_000102030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','example_bi_lstm_300_c_l_i_motorerror_000102030405_0123_1000.mat')
 
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ 
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________  
+
+
+
+
 function []= processing_simulation(varargin)
+%--------------------------------------------------------------------------
+%
+%Function description:
+%"""""""""""""""""""""
+%   This single functions let us combine the entire process of our code
+%   into a single run, bringing together the processes of: 
+%       -generating a trajectory dataset that follows given characteristics
+%       -training an AI model for a given type of architecture with this dataset
+%    However this function is modulable: you can either only generate and
+%    save a trajectory dataset that follows your specifications, or only train
+%    and AI model with a dataset of your choice (it can have been generated
+%    before hand), or do both. How to manipulate these options is descirbed
+%    in the 'Potential inputs' description.
+%
+%Potential inputs:
+%"""""""""""""""""  
+%
+% ''''''''''''''''''''''
+% Most important inputs:
+% ''''''''''''''''''''''
+% 'simulating': this first argument is required (it is the only required argument) either 0 for no simulated
+%  trajectory dataset generation or 1 for generation
+%  the smallest possible function call is therfore: processing_simulation(1)
+%
+% 'training': either 0 for no AI training or 1 for the opposite
+%  example of use: processing_simulation(1,'training',1)
+%  default value: 0
+%
+% 'trajectory_dataset_name': the generated
+% simulated trajectory dataset will be recorded under this name (don't use
+% argument of you want to use default name or are not genertaing dataset)
+%  default value: "placeholder_generated_dataset_name"
+%
+% 'trained_AI_model': the AI architecture that you will train will be
+% determined by this file
+% simulated trajectory dataset will be recorded under this name (don't use
+% argument of you want to use default name or are not training AI)
+%  default value: 'rain_predict_lstm.m'
+%
+% 'name_trained_AI_model': the trained AI model will be saved under this name (don't use
+% argument of you want to use default name or are not genertaing dataset)
+%  default value: 'trained_AI_model.m'
+%
+% 'circles':  either 0 for no circles in generated trajectory dataset or 1 for the opposite
+%  example of use: processing_simulation(1,'circles',1)
+%  default value: 0
+%
+% 'circle_number': number of circles in generated trajectory dataset
+% example of use: processing_simulation(1,'circles',1, 'circle_number',2)
+%  default value: 100
+%
+% 'lines': either 0 for no lines in generated trajectory dataset or 1 for the opposite
+%  example of use: processing_simulation(1,'lines',1)
+%  default value: 0
+%
+% 'line_number': number of lines in generated trajectory dataset
+% example of use: processing_simulation(1,'lines',1, 'line_number',2)
+%  default value: 100
+%
+% 'interpolations': either 0 for no interpolations in generated trajectory dataset or 1 for the opposite
+%  example of use: processing_simulation(1,'interpolations',1)
+%  default value: 0
+%
+% 'interpolation_number': number of interpolations in generated trajectory dataset
+% example of use: processing_simulation(1,'interpolations',1, 'interpolations_number',2)
+%  default value: 100
+%
+% 'selection_erreures_moteur': selections of motors 1/2/3 and motor error
+% types 00/01/02/03/04/05:
+%   00: no error
+%   01: [1,2,3] one of the respective motors (in order) is turned off 
+%   02: [4,5,6] one of the respective motors (in order) will stutter
+%   03: [7,8,9] one of the respective motors (in order) will lag
+%   04: [10,11,12] one of the respective motors (in order) will have a speed-cap
+%   05: [13,14,15] one of the respective motors (in order) will have a
+%   steady-state error
+% example of use: processing_simulation(1,'interpolations',1, 'interpolations_number',2,'selection_erreures_moteur',[0,1,2,8,12,13,15])
+%  default value: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+%
+%
+% '''''''''''''''''
+% Secondary inputs:
+% ''''''''''''''''''
+%
+%
+%Outputs:
+%""""""""
+%--------------------------------------------------------------------------
     %Parsing the intput arguments to enable the setup of default values
     
     % Create an input parser
     p = inputParser;
     
     % Define optional input arguments with default values
-    addRequired(p, 'simulating', @isnumeric);
+    addRequired(p, 'simulating', @isnumeric); 
     addOptional(p, 'training',0, @isnumeric);
     addOptional(p, 'trajectory_dataset_name',"placeholder_generated_dataset_name",@(x) ischar(x) || isstring(x));
     addOptional(p, 'circles', 0, @isnumeric);
@@ -83,6 +204,7 @@ function []= processing_simulation(varargin)
     training = p.Results.training;
     fprintf('Il y aura entrainement Y/N: %d.\n',training);
     trained_AI_model = p.Results.trained_AI_model;
+    assignin('base','trained_AI_model',  trained_AI_model);
     name_trained_AI_model = p.Results.name_trained_AI_model;
     assignin('base','name_trained_AI_model',  name_trained_AI_model)
     if trajectory_dataset_name == "placeholder_generated_dataset_name"

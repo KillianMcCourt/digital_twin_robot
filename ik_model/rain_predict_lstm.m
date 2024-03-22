@@ -1,9 +1,11 @@
 % Step 1num_time_series: Generate the dataset
-num_classes = 13;
+num_classes = 16;
 numClasses = num_classes;
-name_trained_AI_model=['./',name_trained_AI_model];
+% trained_AI_model='bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat';
+% trajectory_dataset_name="./cellArray3_100NewPidLineCircleInterp_m1234_e000201030405.mat";
+trajectory_dataset_name=['./'trajectory_dataset_name];
 % Parameters
-struc=load(name_trained_AI_model);
+struc=load(trajectory_dataset_name);
 %cArray=struc.cellArray;
 cArray=struc.cellArray;
 % cArray=struc;
@@ -160,7 +162,7 @@ net = trainNetwork(XTrain,YTrain,layers,options);
 
 
 
-save('gated_transformer_600_c_l_i_motorerror_000102030405_0123_1000.mat','net')
+save(name_trained_AI_model,'net')
 % Make predictions on the validation set
 YPred = predict(net, XVal);
 
