@@ -288,7 +288,9 @@ if firsttype
                     temp = joint3_ts.Data;                    
                     joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
                 case 13
-                    error4=m0;
+                      joint3_ts.Data = temp;
+                    temp = joint1_ts.Data;                    
+                    joint1_ts.Data = process_points_capped_speed(joint1_ts.Data, speedcap, timescale);
                 case 14
                     error5=m0;
                 case 15
@@ -751,6 +753,13 @@ function updated_j1 = process_points_capped_speed(j1, cap, time_scale)
 
     % Return the updated j1 list
     updated_j1 = j1;
+end
+
+function updated_j1 = process_points_stationary_error(j1, stationary_error, stationary_error_timestamp)
+                 
+             j1(stationary_error_timestamp:end) = j1(stationary_error_timestamp:end) + stationary_error
+          
+            updated_j1 = j1;
 end
 
 
