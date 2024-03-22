@@ -3,7 +3,8 @@ disp("It has begun")
 %processing_simulation('trajectory_dataset_name','testing_if_dataset_generation_works_with_parser','circles',1,'interpolations',1)
 
 %processing_simulation('testing_if_dataset_generation_works_with_parser',1,250,1,333,0,255,[1,9,11],'lol',0.89,0.90,1,1,2,'testmodel','testbase','testfollower','testtargetIDs','testoutputIDs','testguessesIDs',[1,1,1,1,1,1],1020)
-processing_simulation('testing_if_dataset_generation_works_with_parser','circles',1,'lines',1,'interpolations',1,'training',1)
+%processing_simulation('testing_if_dataset_generation_works_with_parser','circles',1,'lines',1,'interpolations',1,'training',1)
+processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','gated_transformer_600_c_l_i_motorerror_0001020304_0123_1000.mat')
 
 
 
@@ -14,8 +15,9 @@ function []= processing_simulation(varargin)
     p = inputParser;
     
     % Define optional input arguments with default values
-    
-    addRequired(p, 'trajectory_dataset_name',@(x) ischar(x) || isstring(x));
+    addRequired(p, 'simulating', @isnumeric);
+    addOptional(p, 'training',0, @isnumeric);
+    addOptional(p, 'trajectory_dataset_name',"placeholder_generated_dataset_name",@(x) ischar(x) || isstring(x));
     addOptional(p, 'circles', 0, @isnumeric);
     addOptional(p, 'circle_number', 100, @isnumeric);
     addOptional(p, 'lines', 0, @isnumeric);
@@ -36,9 +38,10 @@ function []= processing_simulation(varargin)
         "gripper_base.Translation.z"], @(x) ischar(x) || isstring(x));
     addOptional(p, 'outputIDs', ["j1.Rz.q";"j2.Rz.q";"j3.Rz.q";"j4.Rz.q";"j5.Rz.q"], @(x) ischar(x) || isstring(x));  
     addOptional(p, 'guessesIDs', ["j1.Rz.q";"j2.Rz.q";"j3.Rz.q";"j4.Rz.q";"j5.Rz.q"], @(x) ischar(x) || isstring(x)); 
-    addOptional(p, 'guesses', [3,3,3,3,3], @isnumeric);  
-    addOptional(p, 'training', 0, @isnumeric);
+    addOptional(p, 'guesses', [3,3,3,3,3], @isnumeric); 
+    %addOptional(p, 'training', 0, @isnumeric);
     addOptional(p, 'trained_AI_model','rain_predict_lstm.m', @(x) ischar(x) || isstring(x));
+    addOptional(p, 'name_trained_AI_model','trained_AI_model.m', @(x) ischar(x) || isstring(x));
     %%% PAS ENCORE PLEINEMENT FONCTIONNEL, N AFFECTE QUE INTERPOLATION POUR L INSTANT
     addOptional(p, 'nb_points_traj', 1000, @isnumeric);
     addOptional(p, 'stationary_error', pi/4, @isnumeric);
@@ -48,6 +51,8 @@ function []= processing_simulation(varargin)
 
     % Retrieve the values
     disp("-------------------")
+    simulating = p.Results.simulating;
+    fprintf('Il y aura simulation Y/N: %d.\n',simulating);
     trajectory_dataset_name = p.Results.trajectory_dataset_name;
     fprintf('Trajectory dataset name is:  %s.\n',trajectory_dataset_name);
     circles = p.Results.circles;
@@ -60,13 +65,23 @@ function []= processing_simulation(varargin)
     interpolation_number = p.Results.interpolation_number;
     fprintf('Trajectory: interpolation Y/N: %d amount: %d.\n',interpolations,interpolation_number);
     motorerrorselection = p.Results.selection_erreures_moteur;
+    strmot=num2str(motorerrorselection);
     %fprintf('Les erreures moteur seront : %d m.\n',motorerrorselection);
     fprintf('Les erreures moteur seront : [%s%d]\n', sprintf('%d,', motorerrorselection(1:end-1)),motorerrorselection(end));
     training = p.Results.training;
     fprintf('Il y aura entrainement Y/N: %d.\n',training);
     trained_AI_model = p.Results.trained_AI_model;
+    name_trained_AI_model = p.Results.name_trained_AI_model;
+    assignin('base','name_trained_AI_model',  name_trained_AI_model)
+    if trajectory_dataset_name == "placeholder_generated_dataset_name"
+        fprintf("!!!!ATTENTION NOT NAMING SIMULATED TRAJECTORY DATASET IS BAD PRACTICE, we recommend this name: simulated_trajectory_dataset_c_%d_%d_l_%d_%d_i_%d_%d_motor_errors_%s.mat \n",circles,circle_number,lines,line_number,interpolations,interpolation_number,strmot);
+    end
     if training
-        fprintf('Le modèle entrainé sera: %s.\n',trained_AI_model);
+        fprintf('L architecture du modèle entrainé sera régie par le fichier: %s.\n',trained_AI_model);
+        fprintf('Le nom du modèle entrainé sera: %s.\n',name_trained_AI_model);
+        if name_trained_AI_model == "trained_AI_model.m"
+        fprintf("!!!!ATTENTION NOT NAMING TRAINED AI MODEL IS BAD PRACTICE, we recommend this name: trained_AI_model_insert/architecture/details/here_c_%d_%d_l_%d_%d_i_%d_%d_motor_errors_%s.mat \n",circles,circle_number,lines,line_number,interpolations,interpolation_number,strmot);
+        end
     end
 
     %%déclaration globlale
