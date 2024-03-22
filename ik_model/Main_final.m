@@ -14,6 +14,7 @@ function []= processing_simulation(varargin)
     p = inputParser;
     
     % Define optional input arguments with default values
+    
     addRequired(p, 'trajectory_dataset_name',@(x) ischar(x) || isstring(x));
     addOptional(p, 'circles', 0, @isnumeric);
     addOptional(p, 'circle_number', 100, @isnumeric);
@@ -21,7 +22,7 @@ function []= processing_simulation(varargin)
     addOptional(p, 'line_number', 100, @isnumeric);
     addOptional(p, 'interpolations', 0, @isnumeric);
     addOptional(p, 'interpolation_number', 100, @isnumeric);
-    addOptional(p, 'selection_erreures_moteur', [0,1,2,3,4,5,6,7,8,9,10,11,12], @isnumeric);
+    addOptional(p, 'selection_erreures_moteur', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], @isnumeric);
     addOptional(p, 'model_name', 'ik_model\main3_armpi_fpv', @(x) ischar(x) || isstring(x));
     addOptional(p, 'distance_charac_robot', 0.28, @isnumeric);%décrit la zone dans laquelle le robot peut agir, par défault prend la v aleur spécifique du cas de notre étude
     addOptional(p, 'speedcap', 0.2, @isnumeric);
@@ -40,7 +41,8 @@ function []= processing_simulation(varargin)
     addOptional(p, 'trained_AI_model','rain_predict_lstm.m', @(x) ischar(x) || isstring(x));
     %%% PAS ENCORE PLEINEMENT FONCTIONNEL, N AFFECTE QUE INTERPOLATION POUR L INSTANT
     addOptional(p, 'nb_points_traj', 1000, @isnumeric);
-    
+    addOptional(p, 'stationary_error', pi/4, @isnumeric);
+    addOptional(p, 'stationary_error_timestap', 100, @isnumeric);
     % Parse the input arguments
     parse(p, varargin{:});
 
@@ -78,6 +80,13 @@ function []= processing_simulation(varargin)
     speedcap = p.Results.speedcap;
     fprintf('Le speedcap est: %d.\n',speedcap);
     disp("-------------------")
+    stationary_error = p.Results.stationary_error;
+    fprintf('Le stationary_error est: %d.\n',stationary_error);
+    disp("-------------------")
+    stationary_error_timestap = p.Results.stationary_error_timestap;
+    fprintf('Le speedcap est: %d.\n',stationary_error_timestap);
+    disp("-------------------")
+
 
     %Creating the various trajectory datasets for the wanted shape types
 
@@ -382,14 +391,21 @@ function []= processing_simulation(varargin)
                         joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
                         assignin('base','joint3_ts', joint3_ts)
                     case 13
-                        error4=m0;
-                        assignin('base','error4', error4)
+                        joint3_ts.Data = temp;
+                        temp = joint1_ts.Data;                    
+                        joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint1_ts', joint1_ts)
+                        
                     case 14
-                        error5=m0;
-                        assignin('base','error4', error4)
+                        joint1_ts.Data = temp;
+                        temp = joint2_ts.Data;                    
+                        joint2_ts.Data = process_points_stationary_error(joint2_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint2_ts', joint2_ts)
                     case 15
-                        error6=m0;
-                        assignin('base','error4', error4)
+                         joint2_ts.Data = temp;
+                        temp = joint3_ts.Data;                    
+                        joint3_ts.Data = process_points_stationary_error(joint3_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint3_ts', joint3_ts)
             
                 end
                 dataset = [dataset, targets];
@@ -666,14 +682,21 @@ function []= processing_simulation(varargin)
                         joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
                         assignin('base','joint3_ts', joint3_ts)
                     case 13
-                        error4=m0;
-                        assignin('base','error4', error4)
+                        joint3_ts.Data = temp;
+                        temp = joint1_ts.Data;                    
+                        joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint1_ts', joint1_ts)
+                        
                     case 14
-                        error5=m0;
-                        assignin('base','error4', error4)
+                        joint1_ts.Data = temp;
+                        temp = joint2_ts.Data;                    
+                        joint2_ts.Data = process_points_stationary_error(joint2_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint2_ts', joint2_ts)
                     case 15
-                        error6=m0;
-                        assignin('base','error4', error4)
+                         joint2_ts.Data = temp;
+                        temp = joint3_ts.Data;                    
+                        joint3_ts.Data = process_points_stationary_error(joint3_ts.Data, stationary_error, stationary_error_timestap);
+                        assignin('base','joint3_ts', joint3_ts)
                 end
                 dataset2 = [dataset2, targets];
         
@@ -840,6 +863,12 @@ function updated_j1 = process_points_capped_speed(j1, cap, time_scale)
 end
 
 
+function updated_j1 = process_points_stationary_error(j1, stationary_error, stationary_error_timestamp)
+                 
+             j1(stationary_error_timestamp:end) = j1(stationary_error_timestamp:end) + stationary_error
+          
+            updated_j1 = j1;
+end
 
 
 
