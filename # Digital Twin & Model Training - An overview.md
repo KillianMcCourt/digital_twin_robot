@@ -29,7 +29,7 @@ All files have been provided with default values allowing for test usage simply 
 
 If your Simulink model parameters have the viewer on, any simulation should open a window similar to this one : 
 
-![Sample 3D display](Sample_model_display.jpg)
+![Sample 3D display](Sample_model_display.PNG)
 
 An empty or incomplete display most likely means a problem with the filepaths inside the "visual" blocks within subsystem.slx.
 
@@ -37,13 +37,13 @@ An empty or incomplete display most likely means a problem with the filepaths in
 
 A sample dataset is provided to test model training. Running a model should open a window similar to this one :
 
-![Sample model training](Sample_model_training.jpg)
+![Sample model training](13case_regular_model.PNG)
 
 ### Trajectory simulation
 
 Sample trajectories and motor command .csv files are provided. Running shape_test.m should display motor-by-motor comparisons of the simulation and the real trajectory, with multiple figures similar to this one :
 
-![Sample comparison](Sample_comparison.jpg)
+![Sample comparison](Sample_comparison.PNG)
 
 
 
