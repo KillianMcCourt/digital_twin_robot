@@ -1,9 +1,0 @@
-The current folder is built off of a fork of the initial database provided by Mr. Zeng.
-
-All of the work on the AI models has been grouped in the ik_model folder.
-It is structured as follows : 
-
--mainwithnewerrors is the code used to generate datasets with errors. It interacts with the Simulink models based off of provided conditions to generate a saved Matlab struc dataset.
-
--the AI model trainers are each saved as their own mat files. They are designed to process an inidicated saved dataset, and train the appropriate model on it. They can then save the model in a new file, ready to be integrated in a code for predictions on real 
-data. Currently there are three that are functional : train_predict_ltsm, based on a bilateralLSTM architecture; transformermodel, based on a gated Transformer architecture; and Siamesemodel, based on an ISNN architecture.
