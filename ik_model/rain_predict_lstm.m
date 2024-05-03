@@ -1,9 +1,9 @@
 % Step 1num_time_series: Generate the dataset
-num_classes = 16;
+%num_classes = 16;
 numClasses = num_classes;
 % trained_AI_model='bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat';
 % trajectory_dataset_name="./cellArray3_100NewPidLineCircleInterp_m1234_e000201030405.mat";
-trajectory_dataset_name=['./'trajectory_dataset_name];
+trajectory_dataset_name=['./',trajectory_dataset_name];
 % Parameters
 struc=load(trajectory_dataset_name);
 %cArray=struc.cellArray;
@@ -95,7 +95,7 @@ pattern = mod(0:numSeq-1, numClasses);
 categoricalSequence = categorical(pattern, 0:numClasses-1);
 % Repeat each category in categoricalSequence by multfactor times
 repeatedSequence = repelem(categoricalSequence, multfactor);
-
+disp('made it here 2')
 totalElements = numel(repeatedSequence);
 indexToKeep = round(0.8 * totalElements);
 
