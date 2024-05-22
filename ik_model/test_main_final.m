@@ -1,7 +1,7 @@
 disp("Code is Running")
 
 %Current code runs here, choose your options:
-processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray1_100NewPidRealisticTraj_m1234_e000201030405','realistic_trajs',1,'name_trained_AI_model','bi_lstm_v2traj_100_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,1,2,3,4,5,6,7,8,9,10,21,22,23,24,25])
+processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray1_500NewPidRealisticTraj_m1234_e000201030405','realistic_trajs',1, 'realistic_trajs_number',500,'name_trained_AI_model','bi_lstm_v2traj_500_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,6,7,8,9,10, 11,12,13,14,15,21,22,23,24,25])
 %processing_simulation(0,'training',1,'trajectory_dataset_name','cellArray1_100NewPidRealisticTraj_m1234_e000201030405','name_trained_AI_model','bi_lstm_v2traj_100_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,1,2,3,4,5,6,7,8,9,10,21,22,23,24,25])
 
 %processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat')
@@ -174,7 +174,7 @@ function []= processing_simulation(varargin)
     addOptional(p, 'model_name', 'ik_model\main3_armpi_fpv', @(x) ischar(x) || isstring(x));
     addOptional(p, 'distance_charac_robot', 0.28, @isnumeric);%décrit la zone dans laquelle le robot peut agir, par défault prend la v aleur spécifique du cas de notre étude
     addOptional(p, 'speedcap', 0.2, @isnumeric);
-    addOptional(p, 'zero_amount', 0.2, @isnumeric);
+    addOptional(p, 'zero_amount', 0.1, @isnumeric);
     addOptional(p, 'average_smallest_motive_lenght', 50, @isnumeric);
     addOptional(p, 'joint1_damping', 0, @isnumeric);
     addOptional(p, 'joint2_damping', 0, @isnumeric);
@@ -195,7 +195,7 @@ function []= processing_simulation(varargin)
     addOptional(p, 'name_trained_AI_model','trained_AI_model.m', @(x) ischar(x) || isstring(x));
     %%% PAS ENCORE PLEINEMENT FONCTIONNEL, N AFFECTE QUE INTERPOLATION POUR L INSTANT
     addOptional(p, 'nb_points_traj', 1000, @isnumeric);
-    addOptional(p, 'stationary_error', pi/4, @isnumeric);
+    addOptional(p, 'stationary_error',20 , @isnumeric);
     addOptional(p, 'stationary_error_timestap', 100, @isnumeric);
     % Parse the input arguments
     parse(p, varargin{:});
@@ -291,6 +291,13 @@ function []= processing_simulation(varargin)
     end
     if realistic_trajs
         [realistic_trajs_set,realistic_trajs_representative_point_set]= createRandomPickupList(realistic_trajs_number,nb_points_traj, zero_amount,average_smallest_motive_lenght);
+        for i = 1:5
+
+        disp("point commands for motor " + string(i))
+        disp(realistic_trajs_representative_point_set{1,1}{1,i})
+
+        end
+
         thirdtype=1;
     end
     if simulating
@@ -355,7 +362,7 @@ function []= processing_simulation(varargin)
     
     %simul length: len_time_series/100= legnth of simulation in seconds
 
-    scale_factor = randi([2, 4]);
+    scale_factor = rand();
     fprintf('Le scale facotr est: %d.\n', scale_factor);
 
     timescale=10/len_time_series;
@@ -381,6 +388,7 @@ function []= processing_simulation(varargin)
     end
     
     dataset=[];
+    scale_factor = rand();
     if firsttype
         dataset_1=[];
         shapes_dict=reduced_adapted_shape_set;
@@ -442,7 +450,7 @@ function []= processing_simulation(varargin)
             trajectory_motor_command{4}=j4;
             trajectory_motor_command{5}=j5;
             
-            dataset_1=[dataset_1,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap)];
+            dataset_1=[dataset_1,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap,k,num_classes)];
         end
             dataset = [dataset,dataset_1];   
             fprintf("The final size of the dataset1 is %s", mat2str(size(dataset_1)));
@@ -537,7 +545,7 @@ function []= processing_simulation(varargin)
             trajectory_motor_command{4}=j4;
             trajectory_motor_command{5}=j5;
             
-            dataset_2=[dataset_2,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower, stationary_error,stationary_error_timestap)];
+            dataset_2=[dataset_2,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower, stationary_error,stationary_error_timestap,k,num_classes)];
         end
         dataset = [dataset,dataset_2];   
         fprintf("The final size of the dataset2 is %s", mat2str(size(dataset_2)));
@@ -582,7 +590,7 @@ function []= processing_simulation(varargin)
             spline  = targets;
             assignin('base','spline', spline)
             trajectory_motor_command=shape;
-            dataset_3=[dataset_3,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap)];
+            dataset_3=[dataset_3,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap,k,num_classes)];
         end
         dataset = [dataset,dataset_3];   
         fprintf("The final size of the dataset2 is %s", mat2str(size(dataset_3)));
@@ -1037,7 +1045,7 @@ end
 
 
 %function 11
-function [output_dataset] = five_motor_command_simulation(input_motor_commands,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap)
+function [output_dataset] = five_motor_command_simulation(input_motor_commands,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap,k,num_classes)
 %_______________
 %Creates a matrix that contains the wanted trajectory dataset with required
 %errors based on the inputed trajectory types give inside of the motor
@@ -1079,7 +1087,10 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
         
               
         for j=motorerrorselection   %il faut réparer les moteurs 4/5/6
+            disp('----------')
             fprintf('Motor off is:%d\n',j);
+            fprintf('Progression is:%d\n',k);
+            disp('----------')
             error1=m1;
             assignin('base','error1', error1)
             error2=m1;
@@ -1095,62 +1106,84 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
     
             %%%% FOR RANDOM STOP-START BEHAVIOUR SIMULATION
     
-            X = randi([400, 800]);
+            % X = randi([800, 1000]);
+            % 
+            % % Step 2: Randomly select numbers greater than 50 that add up to X
+            % remainingX = X;
+            % selectedNumbers = [];
+            % 
+            % while remainingX > 50
+            %     % Randomly select a number greater than 50
+            %     randomNumber = randi([51, remainingX]);
+            % 
+            %     % Add the selected number to the list
+            %     selectedNumbers = [selectedNumbers, randomNumber];
+            % 
+            %     % Update the remainingX
+            %     remainingX = remainingX - randomNumber;
+            % end
+            % 
+            % % Specify the range
+            % lowerBound = 25;
+            % upperBound = 990;
+            % numPoints = numel(selectedNumbers);
+            % randomPoints = sort(randi([lowerBound, upperBound], 1, numPoints));
+            % totalPoints = 1000;
+            % pointsList = ones(1, totalPoints);
+            % pointsList(randomPoints) = 0;
+            % 
+            % for i = 1:numPoints
+            %     startRange = randomPoints(i);
+            %     endRange = randomPoints(i) + selectedNumbers(i);
+            % 
+            %     % Ensure the endRange does not exceed the total number of points
+            %     endRange = min(endRange, totalPoints);
+            % 
+            %     % Set values to 0 in the specified range
+            %     pointsList(startRange:endRange) = 0;
+            % end
+            % 
+            % % Assuming pointsList is already generated (as per the previous code)
+            % 
+            % 
+
+
+pointsList = zeros(1000, 1);
+
+% Track if at least one block is set to zero
+zeroBlockExists = false;
+
+% Loop through each block of 200 points
+for i = 1:5
+    start_index = (i-1)*200 + 1;
+    end_index = i*200;
     
-            % Step 2: Randomly select numbers greater than 50 that add up to X
-            remainingX = X;
-            selectedNumbers = [];
-    
-            while remainingX > 50
-                % Randomly select a number greater than 50
-                randomNumber = randi([51, remainingX]);
-    
-                % Add the selected number to the list
-                selectedNumbers = [selectedNumbers, randomNumber];
-    
-                % Update the remainingX
-                remainingX = remainingX - randomNumber;
-            end
-    
-            % Specify the range
-            lowerBound = 25;
-            upperBound = 900;
-            numPoints = numel(selectedNumbers);
-            randomPoints = sort(randi([lowerBound, upperBound], 1, numPoints));
-            totalPoints = 1000;
-            pointsList = ones(1, totalPoints);
-            pointsList(randomPoints) = 0;
-    
-            for i = 1:numPoints
-                startRange = randomPoints(i);
-                endRange = randomPoints(i) + selectedNumbers(i);
-    
-                % Ensure the endRange does not exceed the total number of points
-                endRange = min(endRange, totalPoints);
-    
-                % Set values to 0 in the specified range
-                pointsList(startRange:endRange) = 0;
-            end
-    
-            % Assuming pointsList is already generated (as per the previous code)
-    
-            % Create a 1000x2 vector
-            vectorMatrix = zeros(1000, 2);
-    
-            % Populate the first column with linear values from 1 to 1000
-            vectorMatrix(:, 1) = (1:1000)';
-    
-            % Populate the second column with the values from pointsList
-            vectorMatrix(:, 2) = pointsList;
-    
-    
-    
-            %%
+    % Generate a random number to decide if the block will be zeros or ones
+    if rand <= 0.4 && ~zeroBlockExists
+        pointsList(start_index:end_index) = 0;
+        zeroBlockExists = true; % Set flag to true indicating at least one block is set to zero
+    else
+        pointsList(start_index:end_index) = 1;
+    end
+end
+
+% If no block is set to zero, randomly select one block and set it to zero
+if ~zeroBlockExists
+    blockIndex = randi(5);
+    start_index = (blockIndex-1)*200 + 1;
+    end_index = blockIndex*200;
+    pointsList(start_index:end_index) = 0;
+end
+
+pointsList = pointsList';
+% Display the generated points
+disp("Number of points in stutter")
+disp(sum(pointsList))
 
             %pointsList = [ones(100, 1); zeros(500, 1);ones(400, 1)];
             
         
-
+            scale_factor = rand();
             switch j
                 case 1
                     joint1_ts.Data = placeholder1;
@@ -1205,7 +1238,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
                      
-                    joint1_ts.Data = process_points(pointsList, joint1_ts.Data);
+                    joint1_ts.Data = process_points( joint1_ts.Data);
                     assignin('base','joint1_ts', joint1_ts)
                 case 7
                     joint1_ts.Data = placeholder1;
@@ -1214,7 +1247,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
                   
-                    joint2_ts.Data = process_points(pointsList, joint2_ts.Data);
+                    joint2_ts.Data = process_points(joint2_ts.Data);
                     assignin('base','joint2_ts', joint2_ts)
                 case 8
                     joint1_ts.Data = placeholder1;
@@ -1223,7 +1256,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
                      
-                    joint3_ts.Data = process_points(pointsList, joint3_ts.Data);
+                    joint3_ts.Data = process_points( joint3_ts.Data);
                     assignin('base','joint3_ts', joint3_ts)
 
                 case 9
@@ -1233,7 +1266,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
                      
-                    joint4_ts.Data = process_points(pointsList, joint4_ts.Data);
+                    joint4_ts.Data = process_points( joint4_ts.Data);
                     assignin('base','joint4_ts', joint4_ts)
 
                 case 10
@@ -1243,7 +1276,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
                      
-                    joint5_ts.Data = process_points(pointsList, joint5_ts.Data);
+                    joint5_ts.Data = process_points( joint5_ts.Data);
                     assignin('base','joint5_ts', joint5_ts)
                 case 11
                     joint1_ts.Data = placeholder1;
@@ -1251,9 +1284,7 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
                     joint3_ts.Data = placeholder3;
                     joint4_ts.Data = placeholder4;
                     joint5_ts.Data = placeholder5;
-
-                    joint3_ts.Data = temp;
-                    temp =  joint1_ts.Data;                    
+                    
                     joint1_ts.Data = extend_trajectory(joint1_ts.Data, scale_factor);
                     assignin('base','joint1_ts', joint1_ts)
                 case 12
@@ -1389,7 +1420,9 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
             %on ajoute déjà les trajectoires cibles
             disp("----------------")
             disp("----------------")
+            w=warning('off','all');
             simOut = sim(model_name);
+            warning(w);
             assignin('base','simOut', simOut)
             disp("----------------")
             disp("----------------")
@@ -1462,28 +1495,58 @@ function [x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series,mdl,bas
 
 end
 
-%function 13
-function updated_j1 = process_points(pointsList, j1)
-    % Check if input lists have the same length
-    if numel(pointsList) ~= numel(j1)
-        error('Input lists must have the same length.');
+function updated_j1 = process_points(j1)
+    % Initialize pointsList
+    pointsList = zeros(length(j1), 1);
+
+    % Track if at least one block is set to zero
+    zeroBlockExists = false;
+
+    % Loop through each block of 200 points
+    for i = 1:floor(length(j1)/200)
+        start_index = (i-1)*200 + 1;
+        end_index = i*200;
+
+        % Generate a random number to decide if the block will be zeros or ones
+        if rand <= 0.6 && ~zeroBlockExists
+            pointsList(start_index:end_index) = 0;
+            zeroBlockExists = true; % Set flag to true indicating at least one block is set to zero
+        else
+            pointsList(start_index:end_index) = 1;
+        end
     end
 
-    % Iterate over pointsList
+    % If no block is set to zero, randomly select one block and set it to zero
+    if ~zeroBlockExists
+        blockIndex = randi(floor(length(j1)/200));
+        start_index = (blockIndex-1)*200 + 1;
+        end_index = blockIndex*200;
+        pointsList(start_index:end_index) = 0;
+    end
+
+    % Track the indices of the last 50 zeros
+    lastZerosIndices = find(pointsList == 0, 50, 'last');
+
+    % Check if the next set in pointsList is a set of ones
+    if length(pointsList) > lastZerosIndices(end) + 200 && all(pointsList(lastZerosIndices(end) + 1:lastZerosIndices(end) + 200) == 1)
+        % Interpolate from the current value of j1 to the next one
+        startValue = j1(lastZerosIndices(end));
+        endValue = j1(lastZerosIndices(end) + 200);
+        interpolatedValues = linspace(startValue, endValue, 200);
+        j1(lastZerosIndices(end) + 1:lastZerosIndices(end) + 200) = interpolatedValues;
+    end
+
+    % Iterate over pointsList to set j1(i) to j1(i-1) where necessary
     for i = 2:numel(pointsList)
         if pointsList(i) == 0
-            % Set j1(i) to j1(i-1)
-            
             j1(i) = j1(i-1);
-            
-            % Update all j1 values with indices greater than i
-            j1(i+1:end) = j1(i:end-1);
         end
     end
 
     % Return the updated j1 list
     updated_j1 = j1;
 end
+
 
 %function 14
 function updated_j1 = process_points_capped_speed(j1, cap, time_scale)
@@ -1507,35 +1570,130 @@ end
 
 
 function updated_j1 = process_points_stationary_error(j1, stationary_error, stationary_error_timestamp)
-                 
-             j1(stationary_error_timestamp:end) = j1(stationary_error_timestamp:end) + stationary_error
-          
-            updated_j1 = j1;
+    % Define the length of each block
+    blockSize = 200;
+    
+    % Number of blocks
+    numBlocks = length(j1) / blockSize;
+    
+    % Generate a list of blocks to be updated
+    blocksToUpdate = rand(numBlocks, 1) <= 0.4;
+    
+    % Ensure that at least one block will be updated
+    if ~any(blocksToUpdate)
+        blocksToUpdate(randi(numBlocks)) = true;
+    end
+    
+    % Iterate through the blocks to be updated and apply the error
+    for i = 1:numBlocks
+        if blocksToUpdate(i)
+            start_index = (i-1)*blockSize + 1;
+            end_index = i*blockSize;
+            j1(start_index:end_index) = j1(start_index:end_index) + stationary_error;
+        end
+    end
+    
+    % Return the updated j1
+    updated_j1 = j1;
 end
 
 
 %function 15
+% function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
+%     % Determine the number of points in the original trajectory
+%     numOriginalPoints = size(originalPoints, 1);
+% 
+%     % Create an index for the original points
+%     originalIndices = 1:numOriginalPoints;
+% 
+%     % Create an extended index based on the scale factor
+%     extendedIndices = linspace(1, numOriginalPoints, round(scaleFactor * numOriginalPoints));
+% 
+%     % Interpolate to get extended trajectory
+% 
+%     updated_trajectory = interp1(originalIndices, originalPoints, extendedIndices, 'linear', 'extrap');
+% 
+%     % Limit the extended trajectory to the original number of points
+%     updated_trajectory = updated_trajectory(1:min(numOriginalPoints, length(extendedIndices)));
+% end
+
+
+
+
 function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
-    % Determine the number of points in the original trajectory
-    numOriginalPoints = size(originalPoints, 1);
-
-    % Create an index for the original points
-    originalIndices = 1:numOriginalPoints;
-
-    % Create an extended index based on the scale factor
-    extendedIndices = linspace(1, numOriginalPoints, round(scaleFactor * numOriginalPoints));
-
-    % Interpolate to get extended trajectory
+    % Initialize the updated trajectory with the original points
+    updated_trajectory = originalPoints;
     
-    updated_trajectory = interp1(originalIndices, originalPoints, extendedIndices, 'linear', 'extrap');
-
-    % Limit the extended trajectory to the original number of points
-    updated_trajectory = updated_trajectory(1:min(numOriginalPoints, length(extendedIndices)));
+    % Define the length of each block
+    blockSize = 200;
+    
+    % Number of blocks
+    numBlocks = length(originalPoints) / blockSize;
+    
+    % Track if at least one block has been resampled
+    resampleMade = false;
+    
+    % Iterate through each block of 200 points
+    for i = 1:numBlocks
+        start_index = (i-1)*blockSize + 1;
+        end_index = i*blockSize;
+        
+        % Generate a random number to decide if the first 100 points will be resampled
+        if rand <= 0.4 && ~resampleMade
+            % Original first 100 points
+            first_half = originalPoints(start_index:start_index+99);
+            
+            % Resample the first 100 points
+            resampled_points = resample_points(first_half, scaleFactor);
+            
+            % Calculate the number of points to be replaced
+            num_resampled_points = length(resampled_points);
+            num_points_to_replace = min(num_resampled_points, blockSize);
+            
+            % Update the trajectory with resampled points
+            updated_trajectory(start_index:start_index+num_points_to_replace-1) = resampled_points(1:num_points_to_replace);
+            
+            resampleMade = true; % Set flag to true indicating at least one block has been resampled
+        end
+    end
+    
+    % If no block has been resampled, randomly select one block to resample
+    if ~resampleMade
+        blockIndex = randi(numBlocks);
+        start_index = (blockIndex-1)*blockSize + 1;
+        end_index = blockIndex*blockSize;
+        
+        % Original first 100 points
+        first_half = originalPoints(start_index:start_index+99);
+        
+        % Resample the first 100 points
+        resampled_points = resample_points(first_half, scaleFactor);
+        
+        % Calculate the number of points to be replaced
+        num_resampled_points = length(resampled_points);
+        num_points_to_replace = min(num_resampled_points, blockSize);
+        
+        % Update the trajectory with resampled points
+        updated_trajectory(start_index:start_index+num_points_to_replace-1) = resampled_points(1:num_points_to_replace);
+    end
 end
+
+
+function resampled_points = resample_points(points, scaleFactor)
+    % Number of original points
+    num_points = length(points);
+    
+    % Calculate the number of resampled points
+    num_resampled_points = round(num_points * (1 + scaleFactor));
+    
+    % Generate resampled points using interpolation
+    resampled_points = interp1(1:num_points, points, linspace(1, num_points, num_resampled_points), 'linear');
+end
+
 
 %function 16
 function [trajectories,csv_file_equivalent] = createRandomPickupList(number_of_pickup_trajctories,len_time_series, zero_amount,average_smallest_motive_lenght)
-%_______________
+%_____
 %Creates a structure containing a wanted number of  random trajectories that mimic
 %a realistic pickup mouvement of a wanted length ( 5 commands, 1 for each
 %motor)
@@ -1543,7 +1701,7 @@ function [trajectories,csv_file_equivalent] = createRandomPickupList(number_of_p
 %   number_of_pickup_trajctories: number of trajectories that are given
 %   back
 %   len_time_series: number of points intrajectories that are given back
-%_______________
+%_____
 
 %Setting  default value to average_smallest_motive_lenght
  if nargin < 4
@@ -1569,7 +1727,7 @@ end
     generated_trajectories = 0;
 
     % Keep generating trajectories until the desired number is reached
-    while generated_trajectories < number_of_pickup_trajctories
+ while generated_trajectories < number_of_pickup_trajctories
         
         % Increment the counter
         generated_trajectories = generated_trajectories + 1;
@@ -1577,8 +1735,19 @@ end
         trajectory = cell(1, 5);
         triplets_cell = cell(1, 5);
         %Iterating over each of the 5 motors to create one trajectory
+        allowed_amplitude = {240,180,180,180,360};
+        danger_zone = false;
         for i = 1:5
-            [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount);
+            if danger_zone == true
+                allowed_amplitude = {360,35,35,35,360};
+            end
+            [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});
+            if i ==1
+                
+                if -50<triplets(1,1)<50
+                    danger_zone = true;
+                end
+            end
             trajectory{i} = motor_command;
             triplets_cell{i} = triplets;
         end
@@ -1591,9 +1760,9 @@ end
 
 
 %function 17
-function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount)
+function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_motives, len_time_series, zero_amount, allowed_amplitude)
 %_______________
-%Returns the keypoints that are representative of a pickup mouvement and the command for the trajectory, these
+%Returns the keypoints that are representative of a pickup movement and the command for the trajectory, these
 %can be used to make the real robot perform the trajectory. It is
 %considered that the robot is initially in a random position, will have to
 %move to a position to pick up an object and then move that object to a
@@ -1602,102 +1771,86 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
 %   n: case that is executed 
 %_______________
 
-%Point generation range (motor command amplitude)
-min_command=0;
-max_command=360;
-speed_cap=2.7;
+% Point generation range (motor command amplitude)
 
+speed_cap = 2.7;
 
-%Random number of motives on the command of each motor
-%Note to self: maybe favorise apparition of 0 more often with better
-%mechanism?
+% Random number of motives on the command of each motor
+% Note to self: maybe favorise appearance of 0 more often with better mechanism?
 
-%Initialising the points at 0
-motor_command = zeros(len_time_series,1);
+% Initialising the points at 0
+motor_command = zeros(len_time_series, 1);
 
+% Choice of motor use or not
+percentage_zero_amount = zero_amount * 100;
+toggle_value = generateRandomNumbers(1, 100, 1);
+average_smallest_motive_length = len_time_series / max_number_of_motives;
 
-%Choice of motor use or not
-percentage_zero_amount= zero_amount*100;
-toggle_value= generateRandomNumbers(1,100, 1);
-average_smallest_motive_lenght=len_time_series/max_number_of_motives;
-
-
-%Application of the toggle
-if toggle_value>=percentage_zero_amount
+% Application of the toggle
+if toggle_value >= percentage_zero_amount
     
-    number_of_motives_in_traj =generateRandomNumbers(1,max_number_of_motives, 1);
-    triplets=zeros(number_of_motives_in_traj,3);
+    number_of_motives_in_traj = 5;
+    triplets = zeros(number_of_motives_in_traj, 3);
 
-    %needs testing
-    remaining_points=len_time_series;
-    current_index=0;
-    old_point=0;
-    for i =1:number_of_motives_in_traj
-        %The two durations (one time top arrive to the point associated with the
-        %motive and one for the plateau after attaining this point)
+    % Needs testing
+    remaining_points = len_time_series;
+    current_index = 0;
+    old_point = 0;
+    for i = 1:number_of_motives_in_traj
+        % The two durations (one time top arrive at the point associated with the
+        % motive and one for the plateau after attaining this point)
         
+        % Inside motif arrival to plateau len rapport
+        arrival_to_plateau_proportion = randi([2, 8]) / 10;
     
-        %testing
-        %print1=remaining_points-(number_of_motives_in_traj-i)*average_smallest_motive_lenght
+        % Motive length
+        motive_len = 200;
     
-      
-    
-        %inside motif arrival to plateau len rapport
-        arrival_to_plateau_proportion=generateRandomNumbers(1,10,1)/10;
-    
-        %motive len
-        motive_len=generateRandomNumbers(average_smallest_motive_lenght,remaining_points-(number_of_motives_in_traj-i)*average_smallest_motive_lenght , 1);
-    
-        %arrival to point len
-        arrival_to_point_lenght=round(motive_len*arrival_to_plateau_proportion);
-        triplets(i,2)=arrival_to_point_lenght;
+        % Arrival to point length
+        arrival_to_point_length = round(motive_len * arrival_to_plateau_proportion);
+        triplets(i, 2) = arrival_to_point_length;
         if i ~= 1
-            old_point=motor_command(current_index,1);
+            old_point = motor_command(current_index, 1);
         end 
         
-    
-        %plateau len
-        plateau_lenght=motive_len-arrival_to_point_lenght;
-        triplets(i,3)=plateau_lenght;
+        % Plateau length
+        plateau_length = motive_len - arrival_to_point_length;
+        triplets(i, 3) = plateau_length;
 
-        %randomly created next point
-        %maybe open the generation to non entire values? ask killian tomorrow
+        % Randomly created next point
         
-        point=generateRandomNumbers(max(0,old_point-speed_cap* arrival_to_point_lenght),min(360,old_point+speed_cap* arrival_to_point_lenght),1);
-        triplets(i,1)=point;
-
-        %Old Code
-
-        %point=generateRandomNumbers(min_command,max_command,1);
-        % counter=0;
-        % while (abs(point-old_point)/ arrival_to_point_lenght>speed_cap) || counter == 50000
-        %     point=generateRandomNumbers(min_command,max_command,1);
-        %     triplets(i,1)=point;
-        %     counter=counter+1;
-        % end 
-        % if counter == 50000
-        %     error('After 50 000 tries could not find suitable value, the combination of min_command/max_command/speed_cap/arrival_to_plateau_proportion probably does not allow a possible value'); % Raise an error
-        %     % si j'étais pas un flemme ici je virerais l'erreure et ferais
-        %     % en sorte que ca augment progressivement la taille de
-        %     % arrival_to_point_lenght jusqu'a ce que ca marche mais
-        %     % faudrait mettre a jour plein de variables
-        % end
+        if rand() < 0.6
+            point = rand() * allowed_amplitude;
+        else
             
-        %motor_comamand_updates
-        motor_command(current_index+1:current_index+arrival_to_point_lenght,1)=linspace(old_point, point,arrival_to_point_lenght);
-        motor_command(current_index+arrival_to_point_lenght+1:current_index+motive_len,1)=point;
-
-        %calculation of remaining points to be used 
-        remaining_points=remaining_points-motive_len;
-        current_index=len_time_series-remaining_points;
+            point =  - rand() * allowed_amplitude;
+        end
         
+        % Enforce boundary conditions
+        min_point =  old_point - speed_cap * arrival_to_point_length;
+        max_point = old_point + speed_cap * arrival_to_point_length;
+        
+        % Adjust the point to respect speed constraint
+        if point < min_point
+            point = min_point;
+        elseif point > max_point
+            point = max_point;
+        end
+        
+        triplets(i, 1) = point;
 
-    end
-    else
-        triplets=[0,0,0];
-        motor_command(1)=0.0001;
-        motor_command(1)=0.0002;
-    end
+        % Motor command updates
+        motor_command(current_index + 1:current_index + arrival_to_point_length, 1) = linspace(old_point, point, arrival_to_point_length);
+        motor_command(current_index + arrival_to_point_length + 1:current_index + motive_len, 1) = point;
 
-end                
-                
+        % Calculation of remaining points to be used 
+        remaining_points = remaining_points - motive_len;
+        current_index = len_time_series - remaining_points;
+    end
+else
+    triplets = [0, 0, 0];
+    motor_command(1) = 0.0001;
+    motor_command(1) = 0.0002;
+end
+
+end   
