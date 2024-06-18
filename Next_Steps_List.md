@@ -1,6 +1,8 @@
 This file references the steps we are currently working on.
 
-(- study command & response conversion to a 1000 points
+(- study command & response conversion to a 1000 points; study FK on original data, then interpolated, as alternative to current post interpolation FK: graph results. understand cause of failure of resimulation of single-recording data
+
+
 
 - use single generation & postprocessing data split)
 
