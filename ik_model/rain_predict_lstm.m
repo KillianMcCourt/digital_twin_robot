@@ -1,19 +1,29 @@
 % Step 1num_time_series: Generate the dataset
 %num_classes = 16;
-numClasses = num_classes;
+
 % trained_AI_model='bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat';
 % trajectory_dataset_name="./cellArray3_100NewPidLineCircleInterp_m1234_e000201030405.mat";
-trajectory_dataset_name=['./',trajectory_dataset_name];
+numClasses =9
+%trajectory_dataset_name=['./',trajectory_dataset_name];
+trajectory_dataset_name =["dataset_jpoint_realistic_traj_100_motorerror000205.mat"];
 % Parameters
+
 struc=load(trajectory_dataset_name);
 %cArray=struc.cellArray;
+
+
 cArray=struc.cellArray;
+cArray = post_ik_data_real_cell
+
+
+
+
 % cArray=struc;
 sizearray = size(cArray);
 numSeq = sizearray(1); % Number of sequences
 disp(numSeq)
 %length of the testingdata
-test_len=1000;
+test_len=100;
 
 % Size treatment
 numberofcells=numel(cArray);
@@ -22,20 +32,21 @@ multfactor = maxsize / test_len;
 
 % Create a new cell array to store modified data
  modifiedCellArray = cArray;
+ disp(modifiedCellArray)
 
-% Process each cell in the original array
-if multfactor ~= 1
-    modifiedCellArray = cell(1, multfactor * maxsize);
-    for k = 1:numberofcells
-        % Get the data from the original cell
-        originalCell = cArray{k};
-        for i = 1:multfactor
-            acell = originalCell(:, (i - 1) * test_len + 1 : i * test_len);
-            % Assign the cells to the modified cell array
-            modifiedCellArray{(k - 1) * multfactor + i} = acell;
-        end
-    end
-end
+% % Process each cell in the original array
+% if multfactor ~= 1
+%     modifiedCellArray = cell(1, multfactor * maxsize);
+%     for k = 1:numberofcells
+%         % Get the data from the original cell
+%         originalCell = cArray{k};
+%         for i = 1:multfactor
+%             acell = originalCell(:, (i - 1) * test_len + 1 : i * test_len);
+%             % Assign the cells to the modified cell array
+%             modifiedCellArray{(k - 1) * multfactor + i} = acell;
+%         end
+%     end
+% end
 
 % %size treatment
 % maxsize=numel(cArray);
@@ -94,24 +105,29 @@ pattern = mod(0:numSeq-1, numClasses);
 % Create the categorical sequence
 categoricalSequence = categorical(pattern, 0:numClasses-1);
 % Repeat each category in categoricalSequence by multfactor times
-repeatedSequence = repelem(categoricalSequence, multfactor);
+repeatedSequence = categoricalSequence
 disp('made it here 2')
+
+modifiedCellArray = modifiedCellArray(~cellfun(@isempty, modifiedCellArray));
 totalElements = numel(repeatedSequence);
 indexToKeep = round(0.8 * totalElements);
-
 totalCells = numel(modifiedCellArray);
-index = round(0.8 * totalCells);
 
+index = round(0.8 * totalCells);
+indexToKeep = index
 XTrain = modifiedCellArray(1:index);
 XVal = modifiedCellArray(index+1:totalCells);
 YTrain = repeatedSequence(1:indexToKeep);
+
+XTrain = transition_remover(XTrain)
+XVal = transition_remover(XVal)
 YVal =repeatedSequence(indexToKeep+1:totalElements);
 
 
 miniBatchSize = 64;
 % Step 2: Define the neural network
 
-inputSize = 6;
+inputSize = 8;
 numHiddenUnits = 150;
 
 
@@ -131,13 +147,14 @@ layers = [
 
 options = trainingOptions("adam", ...
     ExecutionEnvironment="gpu", ...
-    GradientThreshold=1, ...
+    GradientThreshold=1, ...InitialLearnRate=0.001, ... % Lower initial learning rate
+    InitialLearnRate=0.00002, ... % Lower initial learning rate
     MaxEpochs=400, ...
     MiniBatchSize=miniBatchSize, ...
     ValidationData={XVal,YVal}, ... %new
     ValidationFrequency=20, ...     %new
     SequenceLength="longest", ...
-    L2Regularization = 0.0001, ...  %new
+    L2Regularization = 0.01, ...  %new
     Shuffle="once", ...
     Verbose=0, ...
     Plots="training-progress");
@@ -162,7 +179,7 @@ net = trainNetwork(XTrain,YTrain,layers,options);
 
 
 
-save(name_trained_AI_model,'net')
+save('new_gen_trained_model.mat','net')
 % Make predictions on the validation set
 YPred = predict(net, XVal);
 
@@ -242,3 +259,25 @@ title('Precision-Recall Curves for Multi-Class Classification');
 legend('Location', 'Best');
 hold off; % Stop holding onto the current plot
 
+function newCellArray = transition_remover(originalCellArray)
+    % Check if the input is a cell array
+    if ~iscell(originalCellArray)
+        error('Input must be a cell array.');
+    end
+    
+    % Initialize the new cell array to hold 6x80 matrices
+    newCellArray = cell(size(originalCellArray));
+    
+    % Loop through each matrix in the original cell array
+    for i = 1:numel(originalCellArray)
+        matrix = originalCellArray{i};
+        
+        % Check if the matrix is 8x1000
+        if size(matrix, 1) ~= 8 || size(matrix, 2) ~= 50
+            error('Each matrix in the cell array must be 6x100.');
+        end
+        
+        % Remove the first 20 columns
+        newCellArray{i} = matrix(:, 5:end);
+    end
+end

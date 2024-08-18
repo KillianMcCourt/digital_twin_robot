@@ -1,7 +1,7 @@
 disp("Code is Running")
 
 %Current code runs here, choose your options:
-processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray1_500NewPidRealisticTraj_m1234_e000201030405','realistic_trajs',1, 'realistic_trajs_number',500,'name_trained_AI_model','bi_lstm_v2traj_500_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,6,7,8,9,10, 11,12,13,14,15,21,22,23,24,25])
+processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray1_motor_1_error','realistic_trajs',1, 'realistic_trajs_number',100,'name_trained_AI_model','bi_lstm_v2traj_500_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,7])
 %processing_simulation(0,'training',1,'trajectory_dataset_name','cellArray1_100NewPidRealisticTraj_m1234_e000201030405','name_trained_AI_model','bi_lstm_v2traj_100_rt_motorerror_000102030405_0123_1000.mat','selection_erreures_moteur',[0,1,2,3,4,5,6,7,8,9,10,21,22,23,24,25])
 
 %processing_simulation(1,'training',1,'trajectory_dataset_name','cellArray3_100NewPidLineCircleInterp_m1234_e000201030405','circles',1,'lines',1,'interpolations',1,'name_trained_AI_model','bi_lstm_v2traj_300_c_l_i_motorerror_000102030405_0123_1000.mat')
@@ -174,7 +174,7 @@ function []= processing_simulation(varargin)
     addOptional(p, 'model_name', 'ik_model\main3_armpi_fpv', @(x) ischar(x) || isstring(x));
     addOptional(p, 'distance_charac_robot', 0.28, @isnumeric);%décrit la zone dans laquelle le robot peut agir, par défault prend la v aleur spécifique du cas de notre étude
     addOptional(p, 'speedcap', 0.2, @isnumeric);
-    addOptional(p, 'zero_amount', 0.1, @isnumeric);
+    addOptional(p, 'zero_amount', 0.0, @isnumeric);
     addOptional(p, 'average_smallest_motive_lenght', 50, @isnumeric);
     addOptional(p, 'joint1_damping', 0, @isnumeric);
     addOptional(p, 'joint2_damping', 0, @isnumeric);
@@ -293,8 +293,8 @@ function []= processing_simulation(varargin)
         [realistic_trajs_set,realistic_trajs_representative_point_set]= createRandomPickupList(realistic_trajs_number,nb_points_traj, zero_amount,average_smallest_motive_lenght);
         for i = 1:5
 
-        disp("point commands for motor " + string(i))
-        disp(realistic_trajs_representative_point_set{1,1}{1,i})
+      %  disp("point commands for motor " + string(i))
+       % disp(realistic_trajs_representative_point_set{1,1}{1,i})
 
         end
 
@@ -607,7 +607,7 @@ function []= processing_simulation(varargin)
         rowDist = 6 * ones(1, sized(1)/6);
         % Use mat2cell to convert the dataset into a cell array
         cellArray = mat2cell(dataset, rowDist);
-        disp(size(cellArray))
+        %disp(size(cellArray))
         
         save(trajectory_dataset_name, 'cellArray');
         disp('Dataset saved')
@@ -1057,10 +1057,10 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
 %_______________
         output_dataset=[];
         
-        j1 = input_motor_commands{1};
-        j2 = input_motor_commands{2};
+        j1 = 180 + input_motor_commands{1};
+        j2 = -input_motor_commands{2};
         j3 = input_motor_commands{3};
-        j4 = input_motor_commands{4};
+        j4 = -input_motor_commands{4};
         j5 = input_motor_commands{5};
         
         end_time_value_in_seconds= (len_time_series-1)*0.01;
@@ -1078,339 +1078,218 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
 
         %Creating reset values to but things back to normal after error has
         %been simulated
-        placeholder1=joint1_ts.Data;
-        placeholder2=joint2_ts.Data;
-        placeholder3=joint3_ts.Data;
-        placeholder4=joint4_ts.Data;
-        placeholder5=joint5_ts.Data;
-        placeholder1=joint1_ts.Data;
-        
-              
-        for j=motorerrorselection   %il faut réparer les moteurs 4/5/6
-            disp('----------')
-            fprintf('Motor off is:%d\n',j);
-            fprintf('Progression is:%d\n',k);
-            disp('----------')
-            error1=m1;
-            assignin('base','error1', error1)
-            error2=m1;
-            assignin('base','error2', error2)
-            error3=m1;
-            assignin('base','error3', error3)
-            error4=m1;
-            assignin('base','error4', error4)
-            error5=m1;
-            assignin('base','error5', error5)
-            error6=m1;
-            assignin('base','error6', error6)
+       % Initialize placeholders for original data
+placeholder1 = joint1_ts.Data;
+placeholder2 = joint2_ts.Data;
+placeholder3 = joint3_ts.Data;
+placeholder4 = joint4_ts.Data;
+placeholder5 = joint5_ts.Data;
+
+for j = motorerrorselection
+    disp('----------')
+    fprintf('Motor off is: %d\n', j);
+    fprintf('Progression is: %d\n', k);
+    disp('----------')
+
+    % Reset errors to initial values
+    error1 = m1;
+    error2 = m1;
+    error3 = m1;
+    error4 = m1;
+    error5 = m1;
+    error6 = m1;
     
-            %%%% FOR RANDOM STOP-START BEHAVIOUR SIMULATION
+    % Assign base workspace variables
+    assignin('base', 'error1', error1)
+    assignin('base', 'error2', error2)
+    assignin('base', 'error3', error3)
+    assignin('base', 'error4', error4)
+    assignin('base', 'error5', error5)
+    assignin('base', 'error6', error6)
     
-            % X = randi([800, 1000]);
-            % 
-            % % Step 2: Randomly select numbers greater than 50 that add up to X
-            % remainingX = X;
-            % selectedNumbers = [];
-            % 
-            % while remainingX > 50
-            %     % Randomly select a number greater than 50
-            %     randomNumber = randi([51, remainingX]);
-            % 
-            %     % Add the selected number to the list
-            %     selectedNumbers = [selectedNumbers, randomNumber];
-            % 
-            %     % Update the remainingX
-            %     remainingX = remainingX - randomNumber;
-            % end
-            % 
-            % % Specify the range
-            % lowerBound = 25;
-            % upperBound = 990;
-            % numPoints = numel(selectedNumbers);
-            % randomPoints = sort(randi([lowerBound, upperBound], 1, numPoints));
-            % totalPoints = 1000;
-            % pointsList = ones(1, totalPoints);
-            % pointsList(randomPoints) = 0;
-            % 
-            % for i = 1:numPoints
-            %     startRange = randomPoints(i);
-            %     endRange = randomPoints(i) + selectedNumbers(i);
-            % 
-            %     % Ensure the endRange does not exceed the total number of points
-            %     endRange = min(endRange, totalPoints);
-            % 
-            %     % Set values to 0 in the specified range
-            %     pointsList(startRange:endRange) = 0;
-            % end
-            % 
-            % % Assuming pointsList is already generated (as per the previous code)
-            % 
-            % 
+    % Reset joint data to original placeholders
+    joint1_ts.Data = placeholder1;
+    joint2_ts.Data = placeholder2;
+    joint3_ts.Data = placeholder3;
+    joint4_ts.Data = placeholder4;
+    joint5_ts.Data = placeholder5;
+    initial_data = {joint1_ts.Data, joint2_ts.Data, joint3_ts.Data, joint4_ts.Data, joint5_ts.Data};
 
+   assignin('base', 'joint1_ts', setfield(joint1_ts, 'Data', placeholder1));
+    assignin('base', 'joint2_ts', setfield(joint2_ts, 'Data', placeholder2));
+    assignin('base', 'joint3_ts', setfield(joint3_ts, 'Data', placeholder3));
+    assignin('base', 'joint4_ts', setfield(joint4_ts, 'Data', placeholder4));
+    assignin('base', 'joint5_ts', setfield(joint5_ts, 'Data', placeholder5));
 
-pointsList = zeros(1000, 1);
-
-% Track if at least one block is set to zero
-zeroBlockExists = false;
-
-% Loop through each block of 200 points
-for i = 1:5
-    start_index = (i-1)*200 + 1;
-    end_index = i*200;
+    % Apply errors or process points based on the current motor selection
+    switch j
+        case 0
+            error1 = m1;
+            assignin('base', 'error1', error1)
+        case 1
+            error1 = m0;
+            assignin('base', 'error1', error1)
+        case 2
+            error2 = m0;
+            assignin('base', 'error2', error2)
+        case 3  
+            error3 = m0;
+            assignin('base', 'error3', error3)
+        case 4  
+            error4 = m0;
+            assignin('base', 'error4', error4)
+        case 5  
+            error5 = m0;
+            assignin('base', 'error5', error5)
+        case 6
+            joint1_ts.Data = process_points(joint1_ts.Data);
+            assignin('base', 'joint1_ts', joint1_ts)
+        case 7
+            joint2_ts.Data = process_points(joint2_ts.Data);
+            assignin('base', 'joint2_ts', joint2_ts)
+        case 8
+            joint3_ts.Data = process_points(joint3_ts.Data);
+            assignin('base', 'joint3_ts', joint3_ts)
+        case 9
+            joint4_ts.Data = process_points(joint4_ts.Data);
+            assignin('base', 'joint4_ts', joint4_ts)
+        case 10
+            joint5_ts.Data = process_points(joint5_ts.Data);
+            assignin('base', 'joint5_ts', joint5_ts)
     
-    % Generate a random number to decide if the block will be zeros or ones
-    if rand <= 0.4 && ~zeroBlockExists
-        pointsList(start_index:end_index) = 0;
-        zeroBlockExists = true; % Set flag to true indicating at least one block is set to zero
-    else
-        pointsList(start_index:end_index) = 1;
-    end
-end
-
-% If no block is set to zero, randomly select one block and set it to zero
-if ~zeroBlockExists
-    blockIndex = randi(5);
-    start_index = (blockIndex-1)*200 + 1;
-    end_index = blockIndex*200;
-    pointsList(start_index:end_index) = 0;
-end
-
-pointsList = pointsList';
-% Display the generated points
-disp("Number of points in stutter")
-disp(sum(pointsList))
-
-            %pointsList = [ones(100, 1); zeros(500, 1);ones(400, 1)];
-            
-        
-            scale_factor = rand();
-            switch j
-                case 1
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-
-                    error1=m0;
-                    assignin('base','error1', error1)
-                case 2
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-
-                    error2=m0;
-                    assignin('base','error2', error2)
-                case 3  
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                    
-                    error3=m0;
-                    assignin('base','error3', error3)
-
-                case 4  
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                    
-                    error4=m0;
-                    assignin('base','error4', error4)
-                case 5  
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                    
-                    error5=m0;
-                    assignin('base','error5', error5)
-                case 6
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                     
-                    joint1_ts.Data = process_points( joint1_ts.Data);
-                    assignin('base','joint1_ts', joint1_ts)
-                case 7
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
-                    joint2_ts.Data = process_points(joint2_ts.Data);
-                    assignin('base','joint2_ts', joint2_ts)
-                case 8
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                     
-                    joint3_ts.Data = process_points( joint3_ts.Data);
-                    assignin('base','joint3_ts', joint3_ts)
-
-                case 9
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                     
-                    joint4_ts.Data = process_points( joint4_ts.Data);
-                    assignin('base','joint4_ts', joint4_ts)
-
-                case 10
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                     
-                    joint5_ts.Data = process_points( joint5_ts.Data);
-                    assignin('base','joint5_ts', joint5_ts)
                 case 11
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
                     
-                    joint1_ts.Data = extend_trajectory(joint1_ts.Data, scale_factor);
+                    joint1_ts.Data = extend_trajectory(joint1_ts.Data, rand());
                     assignin('base','joint1_ts', joint1_ts)
                 case 12
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
 
-                    joint2_ts.Data = extend_trajectory(joint2_ts.Data, scale_factor);
+                    joint2_ts.Data = extend_trajectory(joint2_ts.Data, rand());
                     assignin('base','joint2_ts', joint2_ts)
                 case 13
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
 
-                    joint3_ts.Data = extend_trajectory(joint3_ts.Data, scale_factor);
+                    joint3_ts.Data = extend_trajectory(joint3_ts.Data, rand());
                     assignin('base','joint3_ts', joint3_ts)
                 case 14
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
 
-                    joint4_ts.Data = extend_trajectory(joint4_ts.Data, scale_factor);
+                    joint4_ts.Data = extend_trajectory(joint4_ts.Data, rand());
                     assignin('base','joint4_ts', joint4_ts)
                 case 15
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
 
-                    joint5_ts.Data = extend_trajectory(joint5_ts.Data, scale_factor);
+                    joint5_ts.Data = extend_trajectory(joint5_ts.Data, rand());
                     assignin('base','joint5_ts', joint5_ts)
                 case 16
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint1_ts.Data = process_points_capped_speed(joint1_ts.Data, speedcap, timescale);
                     assignin('base','joint1_ts', joint1_ts)
                 case 17
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                   
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint2_ts.Data = process_points_capped_speed(joint2_ts.Data, speedcap, timescale);
                     assignin('base','joint2_ts', joint2_ts)
                 case 18
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
                     assignin('base','joint3_ts', joint3_ts)
                 case 19
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint4_ts.Data = process_points_capped_speed(joint4_ts.Data, speedcap, timescale);
                     assignin('base','joint4_ts', joint4_ts)
                 case 20
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint5_ts.Data = process_points_capped_speed(joint5_ts.Data, speedcap, timescale);
                     assignin('base','joint5_ts', joint5_ts)
                 case 21
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                    
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
                     assignin('base','joint1_ts', joint1_ts)
                     
                 case 22
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                  
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint2_ts.Data = process_points_stationary_error(joint2_ts.Data, stationary_error, stationary_error_timestap);
                     assignin('base','joint2_ts', joint2_ts)
                 case 23
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
                 
                     joint3_ts.Data = process_points_stationary_error(joint3_ts.Data, stationary_error, stationary_error_timestap);
                     assignin('base','joint3_ts', joint3_ts)
                 case 24
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
-                
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
+                    % 
                     joint4_ts.Data = process_points_stationary_error(joint4_ts.Data, stationary_error, stationary_error_timestap);
                     assignin('base','joint4_ts', joint4_ts)
                 case 25
-                    joint1_ts.Data = placeholder1;
-                    joint2_ts.Data = placeholder2;
-                    joint3_ts.Data = placeholder3;
-                    joint4_ts.Data = placeholder4;
-                    joint5_ts.Data = placeholder5;
+                    % joint1_ts.Data = placeholder1;
+                    % joint2_ts.Data = placeholder2;
+                    % joint3_ts.Data = placeholder3;
+                    % joint4_ts.Data = placeholder4;
+                    % joint5_ts.Data = placeholder5;
                 
                     joint5_ts.Data = process_points_stationary_error(joint5_ts.Data, stationary_error, stationary_error_timestap);
                     assignin('base','joint5_ts', joint5_ts)
@@ -1437,11 +1316,103 @@ disp(sum(pointsList))
             j3o = j3o*180/pi;
             j4o = j4o*180/pi;
             j5o = j5o*180/pi;
-    
-        
+
+    joint1_ts.Data = placeholder1;
+    joint2_ts.Data = placeholder2;
+    joint3_ts.Data = placeholder3;
+    joint4_ts.Data = placeholder4;
+    joint5_ts.Data = placeholder5;
+    disp(placeholder1)
+figure;
+
+% Plot for joint 1
+subplot(5, 1, 1); % 5 rows, 1 column, 1st plot
+plot(joint1_ts.Time, joint1_ts.Data);
+title('Joint 1');
+xlabel('Time');
+ylabel('Value');
+grid on;
+
+% Plot for joint 2
+subplot(5, 1, 2); % 5 rows, 1 column, 2nd plot
+plot(joint2_ts.Time, joint2_ts.Data);
+title('Joint 2');
+xlabel('Time');
+ylabel('Value');
+grid on;
+
+% Plot for joint 3
+subplot(5, 1, 3); % 5 rows, 1 column, 3rd plot
+plot(joint3_ts.Time, joint3_ts.Data);
+title('Joint 3');
+xlabel('Time');
+ylabel('Value');
+grid on;
+
+% Plot for joint 4
+subplot(5, 1, 4); % 5 rows, 1 column, 4th plot
+plot(joint4_ts.Time, joint4_ts.Data);
+title('Joint 4');
+xlabel('Time');
+ylabel('Value');
+grid on;
+
+% Plot for joint 5
+subplot(5, 1, 5); % 5 rows, 1 column, 5th plot
+plot(joint5_ts.Time, joint5_ts.Data);
+title('Joint 5');
+xlabel('Time');
+ylabel('Value');
+grid on;
+         
+simulated_data = {simOut.j1.Data, simOut.j2.Data, simOut.j3.Data, simOut.j4.Data, simOut.j5.Data};
+time = joint1_ts.Time; % Assuming all timeseries objects have the same time vector
+
+%Plot the trajectories before and after simulation
+for i = 2:2
+    % Reshape data to be a column vector
+    initial_data_i = reshape(initial_data{i}, [], 1);
+    simulated_data_i = reshape(simulated_data{i}, [], 1);
+
+    % Ensure time is a column vector
+    time = time(:);
+
+    % Create figure
+    figure;
+    hold on;
+
+    % Plot initial data
+    plot(time, initial_data_i, 'b-', 'DisplayName', 'Before Simulation');
+
+    % Plot simulated data
+    plot(time, simulated_data_i, 'r--', 'DisplayName', 'After Simulation');
+
+    % Labels and title
+    xlabel('Time');
+    ylabel(['Joint ', num2str(i), ' Position']);
+    title(['Joint ', num2str(i), ' Trajectories']);
+
+    % Show legend
+    legend('show');
+
+    hold off;
+end
+                    
             [x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series,mdl,base,follower); 
-            jdatapoint = [x, y, z];%pour un j donné on met à la suite les len_time_series prédit  et les réels en prenant en compte le défault moteur, c'est ce qu'on donnera à manger à l'IA;
-            output_dataset=[output_dataset,jdatapoint];
+            figure;
+            plot3(x_scaled, y_scaled, z, 'o-');
+            plot3(x, y, z, 'o-');
+            grid on;
+            Scatter plot with color gradient based on point index
+            scatter3(x(1:10:end), y(1:10:end), z(1:10:end), 50, find(1:10:len_time_series), 'filled', 'MarkerEdgeColor', 'k');
+            xlabel('X-axis');
+            ylabel('Y-axis');
+            zlabel('Z-axis');
+            title('3D Plot Example, what should be done');
+
+
+             jdatapoint = [x, y, z];%pour un j donné on met à la suite les len_time_series prédit  et les réels en prenant en compte le défault moteur, c'est ce qu'on donnera à manger à l'IA;
+             output_dataset=[output_dataset,jdatapoint];
             
         end 
 end
@@ -1508,7 +1479,7 @@ function updated_j1 = process_points(j1)
         end_index = i*200;
 
         % Generate a random number to decide if the block will be zeros or ones
-        if rand <= 0.6 && ~zeroBlockExists
+        if rand <= 0.9
             pointsList(start_index:end_index) = 0;
             zeroBlockExists = true; % Set flag to true indicating at least one block is set to zero
         else
@@ -1529,6 +1500,7 @@ function updated_j1 = process_points(j1)
 
     % Check if the next set in pointsList is a set of ones
     if length(pointsList) > lastZerosIndices(end) + 200 && all(pointsList(lastZerosIndices(end) + 1:lastZerosIndices(end) + 200) == 1)
+        %disp("end of stoppage - interpolating to avoid jump")
         % Interpolate from the current value of j1 to the next one
         startValue = j1(lastZerosIndices(end));
         endValue = j1(lastZerosIndices(end) + 200);
@@ -1537,10 +1509,18 @@ function updated_j1 = process_points(j1)
     end
 
     % Iterate over pointsList to set j1(i) to j1(i-1) where necessary
+    %disp(pointsList)
+
+
+    %pointsList = [ones(200,1);zeros(800, 1)];
+
+
+
     for i = 2:numel(pointsList)
         if pointsList(i) == 0
             j1(i) = j1(i-1);
         end
+        
     end
 
     % Return the updated j1 list
@@ -1577,7 +1557,7 @@ function updated_j1 = process_points_stationary_error(j1, stationary_error, stat
     numBlocks = length(j1) / blockSize;
     
     % Generate a list of blocks to be updated
-    blocksToUpdate = rand(numBlocks, 1) <= 0.4;
+    blocksToUpdate = rand(numBlocks, 1) <= 0.5;
     
     % Ensure that at least one block will be updated
     if ~any(blocksToUpdate)
@@ -1628,7 +1608,7 @@ function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
     blockSize = 200;
     
     % Number of blocks
-    numBlocks = length(originalPoints) / blockSize;
+    numBlocks = floor(length(originalPoints) / blockSize);
     
     % Track if at least one block has been resampled
     resampleMade = false;
@@ -1639,19 +1619,29 @@ function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
         end_index = i*blockSize;
         
         % Generate a random number to decide if the first 100 points will be resampled
-        if rand <= 0.4 && ~resampleMade
+        if rand <= 0.5
             % Original first 100 points
             first_half = originalPoints(start_index:start_index+99);
+            second_half = originalPoints(start_index+100:start_index+199);
             
-            % Resample the first 100 points
-            resampled_points = resample_points(first_half, scaleFactor);
+            % Extend the first 100 points
+            extended_points = extend_points(first_half, scaleFactor);
             
-            % Calculate the number of points to be replaced
-            num_resampled_points = length(resampled_points);
-            num_points_to_replace = min(num_resampled_points, blockSize);
+            % Downscale the second 100 points
+            compressed_points = extend_points(second_half, scaleFactor);
+            
+            % Combine the extended and compressed points
+            resampled_points = [extended_points, compressed_points];
+            
+            % Ensure resampled_points length matches the original block size
+            if length(resampled_points) > blockSize
+                resampled_points = resampled_points(1:blockSize);
+            elseif length(resampled_points) < blockSize
+                resampled_points = [resampled_points, zeros(1, blockSize - length(resampled_points))];
+            end
             
             % Update the trajectory with resampled points
-            updated_trajectory(start_index:start_index+num_points_to_replace-1) = resampled_points(1:num_points_to_replace);
+            updated_trajectory(start_index:end_index) = resampled_points;
             
             resampleMade = true; % Set flag to true indicating at least one block has been resampled
         end
@@ -1665,29 +1655,50 @@ function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
         
         % Original first 100 points
         first_half = originalPoints(start_index:start_index+99);
+        second_half = originalPoints(start_index+100:start_index+199);
         
-        % Resample the first 100 points
-        resampled_points = resample_points(first_half, scaleFactor);
+        % Extend the first 100 points
+        extended_points = extend_points(first_half, scaleFactor);
         
-        % Calculate the number of points to be replaced
-        num_resampled_points = length(resampled_points);
-        num_points_to_replace = min(num_resampled_points, blockSize);
+        % Downscale the second 100 points
+        compressed_points = extend_points(second_half, scaleFactor);
+        
+        % Combine the extended and compressed points
+        resampled_points = [extended_points, compressed_points];
+        
+        % Ensure resampled_points length matches the original block size
+        if length(resampled_points) > blockSize
+            resampled_points = resampled_points(1:blockSize);
+        elseif length(resampled_points) < blockSize
+            resampled_points = [resampled_points, zeros(1, blockSize - length(resampled_points))];
+        end
         
         % Update the trajectory with resampled points
-        updated_trajectory(start_index:start_index+num_points_to_replace-1) = resampled_points(1:num_points_to_replace);
+        updated_trajectory(start_index:end_index) = resampled_points;
     end
 end
 
-
-function resampled_points = resample_points(points, scaleFactor)
+function extended_points = extend_points(points, scaleFactor)
     % Number of original points
-    num_points = length(points);
+
+    num_original_points = numel(points);
+    % Number of points after extending
+    num_extended_points = round(num_original_points * (1 + scaleFactor));
     
-    % Calculate the number of resampled points
-    num_resampled_points = round(num_points * (1 + scaleFactor));
+   % Original number of points
     
-    % Generate resampled points using interpolation
-    resampled_points = interp1(1:num_points, points, linspace(1, num_points, num_resampled_points), 'linear');
+    
+    % Reshape points to ensure it is a row vector
+    points = reshape(points, 1, num_original_points);
+    
+    % New list of points
+    new_points = linspace(0, 1, num_extended_points);
+    
+
+ 
+    % Linear interpolation to extend the original points
+    extended_points = interp1(linspace(0, 1, num_original_points), points, new_points);
+
 end
 
 
@@ -1735,13 +1746,17 @@ end
         trajectory = cell(1, 5);
         triplets_cell = cell(1, 5);
         %Iterating over each of the 5 motors to create one trajectory
-        allowed_amplitude = {240,180,180,180,360};
+        allowed_amplitude = {80,80,80,80,80};
         danger_zone = false;
         for i = 1:5
             if danger_zone == true
-                allowed_amplitude = {360,35,35,35,360};
+                allowed_amplitude = {80,80,80,80,80};
             end
+            if i ==2
             [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});
+            else
+            [motor_command,triplets] = realisticsinglemotorcommandNOGENERATION(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});    
+            end
             if i ==1
                 
                 if -50<triplets(1,1)<50
@@ -1852,5 +1867,36 @@ else
     motor_command(1) = 0.0001;
     motor_command(1) = 0.0002;
 end
+end
+function [motor_command, triplets] = realisticsinglemotorcommandNOGENERATION(max_number_of_motives, len_time_series, zero_amount, allowed_amplitude)
+%_______________
+%Returns the keypoints that are representative of a pickup movement and the command for the trajectory, these
+%can be used to make the real robot perform the trajectory. It is
+%considered that the robot is initially in a random position, will have to
+%move to a position to pick up an object and then move that object to a
+%final position.
+%
+%   n: case that is executed 
+%_______________
+
+% Point generation range (motor command amplitude)
+
+speed_cap = 2.7;
+
+% Random number of motives on the command of each motor
+% Note to self: maybe favorise appearance of 0 more often with better mechanism?
+
+% Initialising the points at 0
+motor_command = zeros(len_time_series, 1);
+
+% Choice of motor use or not
+percentage_zero_amount = zero_amount * 100;
+toggle_value = generateRandomNumbers(1, 100, 1);
+average_smallest_motive_length = len_time_series / max_number_of_motives;
+
+% Application of the toggle
+    triplets = [0, 0, 0];
+    motor_command(1) = 0.0001;
+    motor_command(1) = 0.0002;
 
 end   
