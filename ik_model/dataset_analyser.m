@@ -1,7 +1,7 @@
 % Iterate over each element in the cell array
 %%
 for i = 1:10 %length(cell_array)
-    data = cell_array{i}; % Extract data for the current cell
+    data = simulated_cell_dataset{i}; % Extract data for the current cell
     disp(size(data))
     data = data(:,200:end);
     %pre_downsample = classify(net, data)

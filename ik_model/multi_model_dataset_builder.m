@@ -22,11 +22,13 @@ displays = false;
 use_case ="5D";
 close all
 numClasses = 9;
-stationary_error = 0.628;
+
+
 real_dataset = [];
 real_cell_dataset = {};
 simulated_dataset = [];
-baseDir = 'C:\Users\PC\Downloads\data_for_training\created_from_sim_matrices';
+simulated_cell_dataset = {};
+baseDir = 'C:\Users\PC\Downloads\data_for_training\data_for_training';
 %baseDir = 'C:\Users\PC\Downloads\data_for_training\data_for_testing';
 
 confusionMatrixReal = zeros(numClasses);
@@ -50,6 +52,11 @@ stationary_error_timestap = 100;
 
 % Loop through each subfolder
 for k = 1:length(subFolders)
+    if rand > 0.5
+    stationary_error = rand * 0.2 + 0.15;         % Generates in [0.25, 0.75]
+else
+    stationary_error = -1 * (rand * 0.2 + 0.15);  % Generates in [-0.75, -0.25]
+end
     % Get the current subfolder name
     currentSubFolder = fullfile(baseDir, subFolders(k).name);
     
@@ -290,7 +297,7 @@ selected_segments = randperm(segments, 3);
     results_motorwise = zeros(numClasses,1);
     mse_values = zeros(numClasses, 3);
 
-     for ki= 1:numClasses   
+     for ki= 1: numClasses   
          disp("new ki = ")
          disp(ki)
          disp("--")
@@ -434,6 +441,7 @@ joint5_ts = joint_ts{5};
             disp(prediction_real)
             prediction_simulated= net.predict(simulated_datapoint');
             simulated_dataset = [simulated_dataset, simulated_datapoint];
+            simulated_cell_dataset{end + 1} = simulated_datapoint;
 
             [index_real, index_simulated] = getPredictionIndexes(real_datapoint, simulated_datapoint, net);
 
@@ -900,7 +908,7 @@ function updated_j1 = process_points_stationary_error(j1, stationary_error, stat
         if blocksToUpdate(i)
             start_index = (i-1)*blockSize + 1;
             end_index = i*blockSize;
-            j1(start_index:end_index) = j1(start_index:end_index) + stationary_error;
+            j1(start_index:end_index) = j1(start_index:end_index) *(1+stationary_error);
         end
     end
     
