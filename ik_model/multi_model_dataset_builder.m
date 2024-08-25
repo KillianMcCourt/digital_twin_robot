@@ -1,24 +1,25 @@
-%% Blurb for readme
+
 
 %This function uses real provided data (command and response trajectory) in
 %order to 1 - adapt for use with our AI models (real_datapoint output) and 
 % 2- generate a simulated response to the real command, allowing direct
 % comparison to the real datapoint in order to access digital twin
 % accuracy.
-%This function can also be switched to a "3D" mode, in which 
 
+
+%% activate all displays (command & real response before processing; command, real & simulated responses after processing
+displays = false;
 %%
-% these are placeholder points, with no impact on the simulation unless
-% use_case is set to "3D" trajectry control, rather than "5D" motor
-% control
+
+
 correctDTWpredcount = 0;
 totalDTWpredcount = 0;
 real_trajs_set = {};
 real_command_set = {};
-start_index = 101; % Starting from the 201st point
-end_index = 900;   % Ending at the 800th point
+start_index = 101; 
+end_index = 900;  
 centering = true;
-displays = false;
+
 use_case ="5D";
 close all
 numClasses = 9;
@@ -29,23 +30,22 @@ real_cell_dataset = {};
 simulated_dataset = [];
 simulated_cell_dataset = {};
 baseDir = 'C:\Users\PC\Downloads\data_for_training\data_for_training';
-%baseDir = 'C:\Users\PC\Downloads\data_for_training\data_for_testing';
+
 
 confusionMatrixReal = zeros(numClasses);
 confusionMatrixSimulated = zeros(numClasses);
-% Get a list of all subfolders within the base directory
+
+% First, build a list of all subfolders within the base directory
 subFolders = dir(baseDir);
 subFolders = subFolders([subFolders.isdir]); % Keep only directories
 subFolders = subFolders(~ismember({subFolders.name}, {'.', '..'})); % Remove '.' and '..'
 mse_predictions = [];
 motorwise_mse_predictions = [];
-% Sort the folder names in ascending order
+
 [~, sortIdx] = sort({subFolders.name});
 subFolders = subFolders(sortIdx);
 true_labels = [];
 predicted_labels = [];
-
-% Initialize confusion matrix
 
 confusionMatrix = zeros(numClasses);
 stationary_error_timestap = 100;
@@ -53,16 +53,16 @@ stationary_error_timestap = 100;
 % Loop through each subfolder
 for k = 1:length(subFolders)
     if rand > 0.5
-    stationary_error = rand * 0.2 + 0.15;         % Generates in [0.25, 0.75]
+    stationary_error = rand * 0.2 + 0.15;         % Generates a random value for steady-state failure
 else
-    stationary_error = -1 * (rand * 0.2 + 0.15);  % Generates in [-0.75, -0.25]
+    stationary_error = -1 * (rand * 0.2 + 0.15);  
 end
-    % Get the current subfolder name
+  
     currentSubFolder = fullfile(baseDir, subFolders(k).name);
     
-    % Check if the subfolder is empty
+ 
     if isempty(dir(fullfile(currentSubFolder, '*.csv')))
-        % If the subfolder does not contain any CSV files, skip it
+       
         continue;
     end
     
@@ -71,19 +71,19 @@ end
     cmdFile = fullfile(currentSubFolder, 'trajectory_monitoring_cmd.csv');
     cmdDurationFile = fullfile(currentSubFolder, 'trajectory_monitoring_cmd_duration.csv');
     
-    % Check if the files exist before reading them
+    % Check if the files exist 
     if isfile(positionFile) && isfile(cmdFile) && isfile(cmdDurationFile)
-        % Read the tables from the CSV files
+     
         df = readtable(positionFile);
         df_cmd = readtable(cmdFile);
         df_cmd_duration = readtable(cmdDurationFile);
         
-        % Add your processing code here     
+      
 
 
         %% preparing data for full trajectory test
         
-        %specify source files for the trajectory
+ 
         
         
         len_time_series = 1000; % because most commands don't contain point-by-point commands, this has to be specified by the user
@@ -95,21 +95,18 @@ end
         
         
         
-        % Calculate time since start for both dataframes
+    
         df.time_since_start = df.timestamp - df.timestamp(1);
-        %disp(df.time_since_start)
+    
         df_cmd.time_since_start = max(0,df_cmd.timestamp - df.timestamp(1));
         
         
-        % Convert position values to the axis system used in our simulations
+      
         df_deg = df{:, 2:end} / 1000 * 240;
         df_cmd_deg = df_cmd{:, 2:end} / 1000 * 240;
            
         
-        %for this section xyz_targets is simply a .csv containing positions along
-        %each axis for the target positions. The code will perform IK-FK operations
-        %to simulate. Comparison with real response not yet supported.
-        
+    
         
         
         
@@ -162,10 +159,10 @@ end
         sample_time=10/len_time_series;
         max_speed =2.7;  %empirical value 2.2642; 
         %degrees per point, i.e. here 2.7 deg / 10ms
-        %in theory could be 2.7*(timestamp(end)-timestamp(1))/10 to account for
+        %could potnetially be 2.7*(timestamp(end)-timestamp(1))/10 to account for
         %other simulation time to point ratio
         true_pred = 0;
-        %Prepwork
+        %Prep for simulations
         model_name = 'main3_armpi_fpv';
         load_system(model_name);
         joint1_damping = 0;
@@ -187,7 +184,7 @@ end
         guesses = [3,3,3,3,3];
         addInitialGuessVariables(ik,guessesIDs);
         
-        %simul length: len_time_series/100= legnth of simulation in seconds
+      
         
         j1 = zeros(len_time_series,1);
         j2 = zeros(len_time_series,1);
@@ -202,9 +199,7 @@ end
         m1=[transpose(1:len_time_series), ones(len_time_series, 1)];
         
         if use_case =="5D" 
-        % in order to utilise the same base structure, I found it simpler to
-        % generate a placeholder 3D traj rather than handle undefined x, y, z later
-        % on. This has no impact on the the actual simulation.
+        %creation of placeholder variables. Will be overwritten
         vector = 0.01*rand(len_time_series, 1);
         x_placeholder = vector;
         y_placeholder = vector;
@@ -319,17 +314,6 @@ selected_segments = randperm(segments, 3);
         case 5
             joint4_ts.Data = process_points(joint4_ts.Data);
          
-                % case 6
-                %     joint1_ts.Data = extend_trajectory(joint1_ts.Data, rand());
-                % 
-                % case 7
-                %     joint2_ts.Data = extend_trajectory(joint2_ts.Data, rand());
-                % 
-                % case 8
-                %     joint3_ts.Data = extend_trajectory(joint3_ts.Data, rand());
-                % 
-                % case 9
-                %     joint4_ts.Data = extend_trajectory(joint4_ts.Data, rand());
                 
               case 6
                     joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
@@ -361,7 +345,7 @@ selected_segments = randperm(segments, 3);
 % Assign modified time series back to workspace variables (if needed)
 
 
-% Add trajectories to the model
+
 disp("----------------")
 disp("----------------")
 w = warning('off', 'all');
@@ -423,16 +407,7 @@ joint5_ts = joint_ts{5};
             net = net.net;
 
 
-            % figure;
-            % text(5, 0, ['AI Prediction: ', string(double(classify(net, simulated_datapoint(200:end,1:6)'))), 'Real Class: ', string(ki)], 'FontSize', 12, 'Color', 'red', 'HorizontalAlignment', 'center');
-            % xlim([0, 10]);
-            % ylim([-1, 1]);
-            % 
-            % % Remove the axis for a clean look
-            % axis off;
-            % 
-            % % Set title if needed (optional)
-            % title('AI Prediction Result');
+
 
             prediction_real = net.classify(real_datapoint');
             disp("for ik =")
@@ -451,7 +426,7 @@ disp(['Index of highest value in simulated prediction: ', num2str(index_simulate
 if displays ==true
 plotRealDataPoints(real_datapoint)
 disp(['Index of highest value in real prediction: ', num2str(index_real)]);
-%plotRealDataPoints(simulated_datapoint)
+
 disp(['Index of highest value in simulated prediction: ', num2str(index_simulated)]);
 end
 if centering == true
@@ -476,31 +451,30 @@ end
 [dtw_dist_y, ~] = dtw(comparison_matrix_real(:, 2), comparison_matrix(:, 2));
 [dtw_dist_z, ~] = dtw(comparison_matrix_real(:, 3), comparison_matrix(:, 3));
 
-% Display the DTW results
+
 fprintf('DTW Distance for X: %f\n', dtw_dist_x);
 fprintf('DTW Distance for Y: %f\n', dtw_dist_y);
 fprintf('DTW Distance for Z: %f\n', dtw_dist_z);
 
-% Calculate the total DTW distance (sum of individual distances)
+% Calculate the total DTW distance. Weights could be added to emphasize a
+% specific axis
 dtw_total = dtw_dist_x + dtw_dist_y + dtw_dist_z;
 
     
     % Store the MSE values
     mse_values(ki, :) = [mse_x, mse_y, mse_z];
     results(ki) = dtw_total;
-    %results(ki)=mse_total*100;
+   
     results_motorwise(ki) = mse_motorwise;
-    % results(ki) = mse_total;
+
     if displays ==true
-    predicted_label = [predicted_labels; categorical(ki)]; % Predicted labels (adjust as needed)
+    predicted_label = [predicted_labels; categorical(ki)]; 
     disp("MSE - predicted_label")
     disp(predicted_label)
-    % Store the true and predicted labels
-    %true_labels = [true_labels; mod(ki, numClasses)]; % True labels
 
     end
 
-    % Plot the comparison graphs and MSE values for each ki
+    % Plot the comparison graphs and MSE values for each failure mode ki
     if displays ==true
      figure;
 
@@ -532,23 +506,19 @@ dtw_total = dtw_dist_x + dtw_dist_y + dtw_dist_z;
   if centering == true
       len_time_series = length(comparison_matrix_real(:, 1));
   end
-    % Plot X coordinate comparison
+
     subplot(3, 1, 1);
     plot(1:len_time_series, comparison_matrix_real(:, 1), 'b', 1:len_time_series, comparison_matrix(:, 1), 'r', 1:len_time_series, comparison_matrix_target(:, 1), 'g');
     title(['X Coordinate Comparison for ki = ', num2str(ki)]);
     xlabel('Time');
     ylabel('X Value');
     legend('Real', 'Predicted','Command');
-
-    % Plot Y coordinate comparison
     subplot(3, 1, 2);
     plot(1:len_time_series, comparison_matrix_real(:, 2), 'b', 1:len_time_series, comparison_matrix(:, 2), 'r', 1:len_time_series, comparison_matrix_target(:, 2), 'g');
     title(['Y Coordinate Comparison for ki = ', num2str(ki)]);
     xlabel('Time');
     ylabel('Y Value');
     legend('Real', 'Predicted','Command');
-
-    % Plot Z coordinate comparison
     subplot(3, 1, 3);
     plot(1:len_time_series, comparison_matrix_real(:, 3), 'b', 1:len_time_series, comparison_matrix(:, 3), 'r', 1:len_time_series, comparison_matrix_target(:, 3), 'g');
     title(['Z Coordinate Comparison for ki = ', num2str(ki)]);
@@ -556,7 +526,7 @@ dtw_total = dtw_dist_x + dtw_dist_y + dtw_dist_z;
     ylabel('Z Value');
     legend('Real', 'Predicted','Command');
     
-    % Display the MSE values
+   
     annotation('textbox', [0.85, 0.5, 0.1, 0.1], 'String', ...
         {['MSE X: ', num2str(mse_x)], ['MSE Y: ', num2str(mse_y)], ['MSE Z: ', num2str(mse_z)], ['Total MSE: ', num2str(mse_total)]}, ...
         'FitBoxToText', 'on');
@@ -577,21 +547,15 @@ if indexOfMin == mod(k, numClasses)
     true_pred = true_pred + 1;
 end
 
-% Create a figure for the summary table
+
 if displays ==true
 figure;
 
-% Display the summary table
 summary_data = [(1:numClasses)', results.*1];
 column_names = {'Class', 'Total_MSE'};
 uitable('Data', summary_data, 'ColumnName', column_names);
 [~, minIndex] = min(summary_data(:,2));
 end
-%figure;
-% disp("for the current file considered number" )
-% disp(k)
-% disp("at location")
-% disp(currentSubFolder)
 
 %%
 
@@ -662,14 +626,8 @@ function [comparison_matrix, x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_
     for i = 1:len_time_series
         targets = [j1(i),j2(i),j3(i),j4(i),j5(i)];
         
-        % try
          [outputVec,statusFlag] = solve(ik,targets);
-        % catch 
-        %     disp(ik)
-        %     disp(targets)
-        %     counter = counter + 1
-        %     disp(counter +1 )
-        % end
+
 
         x(i,1) = outputVec(1);
         y(i,1) = outputVec(2);
@@ -683,16 +641,7 @@ comparison_matrix(:, 2) = y;
 comparison_matrix(:, 3) = z;
 writematrix(comparison_matrix, "realised")
 
-% Plot the motion in 3D space of the simulated matrix as an example. Code
-% can be trivially adapted to display the others.
-% figure;
-% plot3(comparison_matrix(:,1), comparison_matrix(:,2), comparison_matrix(:,3), 'g');
-% xlabel('X');
-% ylabel('Y');
-% zlabel('Z');
-% title('Comparison of Motions in 3D Space');
-% legend( 'Comparison motion')
-% grid on;
+
 
 end
 
@@ -707,7 +656,7 @@ function updated_j1 = process_points_capped_speed(j1, max_speed)
     for i = 2:numel(j1)
           
         if (j1(i)-j1(i-1)) > max_speed
-            % Set j1(i) to j1(i-1)
+          
             
             j1(i) = j1(i-1)+max_speed;
         elseif (j1(i)-j1(i-1)) < - max_speed
@@ -717,7 +666,7 @@ function updated_j1 = process_points_capped_speed(j1, max_speed)
         end
     end
 
-    % Return the updated j1 list
+   
     updated_j1 = j1;
 end
 
@@ -732,37 +681,29 @@ function [reference_positions, response_positions] = generate_positions(df, df_c
 
 index = find(df.time_since_start < start_time(1), 1, 'last');
 index = 1;
-% Check if the index is empty and assign the starting position accordingly
+
 if isempty(index)
     starting_position = df{1, motor};
-    %disp('empty index')
+   
 else
     starting_position = df{index, motor};
 end
 
-%This part finds the index of the last recorded time that is less than the start time of the first command.
-%If such an index doesn't exist (i.e., isempty(index)), it uses the first recorded position of the motor.
-%Otherwise, it uses the position of the motor at the found index.
+
     points = [start_time(1), starting_position];
-    %disp(size(points))
+
     points = [points; start_time(1)+duration(1)/len_time_series, command(1)];
     for idx = 2:length(command)
         points = [points; start_time(idx), command(idx-1)];  %this places the target point
         points = [points; start_time(idx)+duration(idx)/len_time_series, command(idx)]; %this creates an articial target representing the end of the plateau
     end
 
-    %It initializes the points array with the first start time and the starting position.
-    %For each command, it adds two points:
-    %One at the start time of the command with the previous command value.
-    %Another after the duration of the command divided by len_time_series with the current command value.
-    %Finally, it adds a point at the end of the recorded time with the last command value.
+  
 
 
     points = [points; df.time_since_start(end), command(end)];
 
-    % Interpolate linearly along the given motor's positions to get len_time_series points for the reference curve
-    %once time seires has been obtained, use it as a time reference for a
-    %new interpolation 
+
     x_values = points(:, 1);
 
     y_values = points(:, 2);
@@ -779,14 +720,9 @@ end
     disp(y_values)
     
     interpolated_y = interp1(x_values, y_values, interpolated_x);
-    
-    % Return the positions of the reference curve
+
     reference_positions = [interpolated_x', interpolated_y'];
 
-    % Interpolate the response to len_time_series
-
-    %response_positions = pchip(df.time_since_start, df.(motor), interpolated_x)
-    %interpolated_x); -seems to induce strong oscillations in x-response
 
     response_positions = interp1(df.time_since_start, df.(motor), interpolated_x);
     for i = 2:length(response_positions)
@@ -800,20 +736,17 @@ end
 
 
 function plot_motor_movement_3(df, df_cmd, df_cmd_duration, motor, jo)
-    % figure;
-    % plot(df.time_since_start, df.(motor), 'LineWidth', 1.5, 'DisplayName', 'response');
+
 
     command = df_cmd.(motor);
     start_time = df_cmd.time_since_start;
     duration = df_cmd_duration.(motor);
 
-    % Find the index where df.time_since_start is less than start_time(1)
 index = find(df.time_since_start < start_time(1), 1, 'last');
 
-% Check if the index is empty and assign the starting position accordingly
 if isempty(index)
     starting_position = df{1, motor};
-    %disp('empty index')
+
 else
     starting_position = df{index, motor};
 end
@@ -825,26 +758,11 @@ end
     end
     points = [points; df.time_since_start(end), command(end)];
 
-    % Interpolate to get 1000 points
     x_values = points(:, 1);
     y_values = points(:, 2);
     interpolated_x = linspace(min(x_values), max(x_values), 1000);
     interpolated_y = interp1(x_values, y_values, interpolated_x);
 
-    % Plot the points and connect them with straight lines
-    % hold on;
-    % plot(points(:,1), points(:,2), '-or', 'DisplayName', 'reference');
-    % plot(interpolated_x, interpolated_y, 'DisplayName', 'interpolated reference');
-    % plot(interpolated_x, jo', 'DisplayName', 'jo')
-    % hold off;
-    % 
-    % legend;
-    % xlabel('time since start (seconds)');
-    % ylabel('position (degrees)');
-    % title([motor ' movement']);
-    % grid on;
-    % 
-    % Return the positions of the reference curve
     reference_positions = [interpolated_x', interpolated_y'];
 end
 
@@ -855,24 +773,18 @@ function plot_comparison(com_motor_6, mov_6, name)
     %   com_motor_6 - A vector or matrix to be plotted in the first and third subplots
     %   mov_6 - A vector or matrix to be plotted in the second and third subplots
 
-    % Create a figure for the plots
+   
     figure;
-
-    % Plot com_motor_6 on the first subplot
     subplot(3, 1, 1);
     plot(com_motor_6);
     title('com\_motor\_6');
     xlabel('Index');
     ylabel('Value');
-
-    % Plot mov_6 on the second subplot
     subplot(3, 1, 2);
     plot(mov_6);
     title('mov\_6');
     xlabel('Index');
     ylabel('Value');
-
-    % Plot both com_motor_6 and mov_6 on the third subplot for comparison
     subplot(3, 1, 3);
     plot(com_motor_6);
     hold on;
@@ -882,28 +794,17 @@ function plot_comparison(com_motor_6, mov_6, name)
     xlabel('Index');
     ylabel('Value');
     legend(string(name), string(name));
-
-    % Adjust the layout
     sgtitle(string(name));
 end
 
 
 function updated_j1 = process_points_stationary_error(j1, stationary_error, stationary_error_timestamp)
-    % Define the length of each block
     blockSize = 200;
-    
-    % Number of blocks
     numBlocks = length(j1) / blockSize;
-    
-    % Generate a list of blocks to be updated
     blocksToUpdate = rand(numBlocks, 1) <= 1;
-    
-    % Ensure that at least one block will be updated
     if ~any(blocksToUpdate)
         blocksToUpdate(randi(numBlocks)) = true;
     end
-    
-    % Iterate through the blocks to be updated and apply the error
     for i = 1:numBlocks
         if blocksToUpdate(i)
             start_index = (i-1)*blockSize + 1;
@@ -911,33 +812,23 @@ function updated_j1 = process_points_stationary_error(j1, stationary_error, stat
             j1(start_index:end_index) = j1(start_index:end_index) *(1+stationary_error);
         end
     end
-    
-    % Return the updated j1
     updated_j1 = j1;
 end
 
 function updated_j1 = process_points(j1)
-    % Initialize pointsList
     pointsList = zeros(length(j1), 1);
-
-    % Track if at least one block is set to zero
     zeroBlockExists = false;
-
-    % Loop through each block of 200 points
     for i = 1:floor(length(j1)/200)
         start_index = (i-1)*200 + 1;
         end_index = i*200;
 
-        % Generate a random number to decide if the block will be zeros or ones
         if rand <= 1 
             pointsList(start_index:end_index) = 0;
-            zeroBlockExists = true; % Set flag to true indicating at least one block is set to zero
+            zeroBlockExists = true; 
         else
             pointsList(start_index:end_index) = 1;
         end
     end
-
-    % If no block is set to zero, randomly select one block and set it to zero
     if ~zeroBlockExists
         blockIndex = randi(floor(length(j1)/200));
         start_index = (blockIndex-1)*200 + 1;
@@ -945,24 +836,17 @@ function updated_j1 = process_points(j1)
         pointsList(start_index:end_index) = 0;
     end
 
-    % Track the indices of the last 50 zeros
     lastZerosIndices = find(pointsList == 0, 50, 'last');
 
-    % Check if the next set in pointsList is a set of ones
     if length(pointsList) > lastZerosIndices(end) + 200 && all(pointsList(lastZerosIndices(end) + 1:lastZerosIndices(end) + 200) == 1)
-        %disp("end of stoppage - interpolating to avoid jump")
-        % Interpolate from the current value of j1 to the next one
         startValue = j1(lastZerosIndices(end));
         endValue = j1(lastZerosIndices(end) + 200);
         interpolatedValues = linspace(startValue, endValue, 200);
         j1(lastZerosIndices(end) + 1:lastZerosIndices(end) + 200) = interpolatedValues;
     end
 
-    % Iterate over pointsList to set j1(i) to j1(i-1) where necessary
-    %disp(pointsList)
-
-
-    %pointsList = [ones(200,1);zeros(800, 1)];
+    %the following line can be commented if random segments are desired. If
+    %left, it activates failure on the entire segment
     pointsList = [zeros(1000, 1)];
 
 
@@ -973,115 +857,63 @@ function updated_j1 = process_points(j1)
         
     end
 
-    % Return the updated j1 list
     updated_j1 = j1;
 end
 
 
 function updated_trajectory = extend_trajectory(originalPoints, scaleFactor)
-    % Initialize the updated trajectory with the original points
     updated_trajectory = originalPoints;
-    
-    % Define the length of each block
     blockSize = 200;
-    
-    % Number of blocks
     numBlocks = floor(length(originalPoints) / blockSize);
-    
-    % Track if at least one block has been resampled
     resampleMade = false;
-    
-    % Iterate through each block of 200 points
     for i = 1:numBlocks
         start_index = (i-1)*blockSize + 1;
         end_index = i*blockSize;
-        
-        % Generate a random number to decide if the first 100 points will be resampled
         if rand <= 1 
-            % Original first 100 points
             first_half = originalPoints(start_index:start_index+99);
             second_half = originalPoints(start_index+100:start_index+199);
-            
-            % Extend the first 100 points
             extended_points = extend_points(first_half, scaleFactor);
-            
-            % Downscale the second 100 points
             compressed_points = extend_points(second_half, scaleFactor);
-            
-            % Combine the extended and compressed points
             resampled_points = [extended_points, compressed_points];
-            
-            % Ensure resampled_points length matches the original block size
             if length(resampled_points) > blockSize
                 resampled_points = resampled_points(1:blockSize);
             elseif length(resampled_points) < blockSize
                 resampled_points = [resampled_points, zeros(1, blockSize - length(resampled_points))];
             end
-            
-            % Update the trajectory with resampled points
             updated_trajectory(start_index:end_index) = resampled_points;
             
-            resampleMade = true; % Set flag to true indicating at least one block has been resampled
+            resampleMade = true; 
         end
     end
-    
-    % If no block has been resampled, randomly select one block to resample
     if ~resampleMade
         blockIndex = randi(numBlocks);
         start_index = (blockIndex-1)*blockSize + 1;
         end_index = blockIndex*blockSize;
-        
-        % Original first 100 points
         first_half = originalPoints(start_index:start_index+99);
         second_half = originalPoints(start_index+100:start_index+199);
-        
-        % Extend the first 100 points
         extended_points = extend_points(first_half, scaleFactor);
-        
-        % Downscale the second 100 points
         compressed_points = extend_points(second_half, scaleFactor);
-        
-        % Combine the extended and compressed points
         resampled_points = [extended_points, compressed_points];
-        
-        % Ensure resampled_points length matches the original block size
         if length(resampled_points) > blockSize
             resampled_points = resampled_points(1:blockSize);
         elseif length(resampled_points) < blockSize
             resampled_points = [resampled_points, zeros(1, blockSize - length(resampled_points))];
         end
-        
-        % Update the trajectory with resampled points
         updated_trajectory(start_index:end_index) = resampled_points;
     end
 end
 
 function extended_points = extend_points(points, scaleFactor)
-    % Number of original points
-
     num_original_points = numel(points);
-    % Number of points after extending
     num_extended_points = round(num_original_points * (1 + scaleFactor));
-    
-   % Original number of points
-    
-    
-    % Reshape points to ensure it is a row vector
     points = reshape(points, 1, num_original_points);
-    
-    % New list of points
     new_points = linspace(0, 1, num_extended_points);
-    
-
- 
-    % Linear interpolation to extend the original points
     extended_points = interp1(linspace(0, 1, num_original_points), points, new_points);
 
 end
 
 
 function display_curves(df, df_cmd, motor)
-    % Plot the command curve
     command = df_cmd.(motor);
     command_time = df_cmd.timestamp;
     response = df.(motor);
@@ -1090,21 +922,13 @@ function display_curves(df, df_cmd, motor)
     figure;
     hold on;
     grid on;
-    
-    % Plot the response curve with a line
     plot(response_time, response, 'b-', 'LineWidth', 1.5);
-
-    % Add red crosses at each command point
     plot(command_time, command, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
-
-    % Add green crosses at the midpoint between command points
     for i = 1:length(command) - 1
         midpoint_time = (command_time(i) + command_time(i + 1)) / 2;
         previous_value = command(i);
         plot(midpoint_time, previous_value, 'gx', 'MarkerSize', 10, 'LineWidth', 2);
     end
-
-    % Add titles and labels
     title(['Command and Response Curves for ', motor]);
     xlabel('Time Since Start');
     ylabel('Value');
@@ -1112,12 +936,8 @@ function display_curves(df, df_cmd, motor)
     hold off;
 end
 function [index_real, index_simulated] = getPredictionIndexes(real_datapoint, simulated_datapoint, net)
-    % Predict the values
     prediction_real = net.classify(real_datapoint');
     prediction_simulated = net.classify(simulated_datapoint');
-  
-
-    % Find the indexes of the highest values
     [~, index_real] = max(net.predict(real_datapoint'));
     [~, index_simulated] = max(net.predict(simulated_datapoint'));
 end
@@ -1126,43 +946,32 @@ end
 
 
 function plotRealDataPoints(real_datapoint)
-    % Ensure the input is a 1000x6 matrix
     if size(real_datapoint, 1) ~= 1000 || size(real_datapoint, 2) ~= 6
         error('Input matrix must be 1000x6 in size.');
     end
-
-    % Create a figure
     figure;
-    
-
-
-    % Plot 1st and 4th columns
-    subplot(3, 1, 1); % Create a subplot with 3 rows, 1 column, position 1
-    plot(real_datapoint(:, 1), 'r'); % Plot 1st column in red
+    subplot(3, 1, 1);
+    plot(real_datapoint(:, 1), 'r'); 
     hold on;
-    plot(real_datapoint(:, 4), 'b'); % Plot 4th column in blue
+    plot(real_datapoint(:, 4), 'b'); 
     title('Plot of 1st and 4th Columns');
     legend('1st Column', '4th Column');
     xlabel('Index');
     ylabel('Value');
     hold off;
-
-    % Plot 2nd and 5th columns
-    subplot(3, 1, 2); % Create a subplot with 3 rows, 1 column, position 2
-    plot(real_datapoint(:, 2), 'r'); % Plot 2nd column in green
+    subplot(3, 1, 2); 
+    plot(real_datapoint(:, 2), 'r'); 
     hold on;
-    plot(real_datapoint(:, 5), 'b'); % Plot 5th column in magenta
+    plot(real_datapoint(:, 5), 'b');
     title('Plot of 2nd and 5th Columns');
     legend('2nd Column', '5th Column');
     xlabel('Index');
     ylabel('Value');
     hold off;
-
-    % Plot 3rd and 6th columns
-    subplot(3, 1, 3); % Create a subplot with 3 rows, 1 column, position 3
-    plot(real_datapoint(:, 3), 'r'); % Plot 3rd column in cyan
+    subplot(3, 1, 3); 
+    plot(real_datapoint(:, 3), 'r'); 
     hold on;
-    plot(real_datapoint(:, 6), 'b'); % Plot 6th column in black
+    plot(real_datapoint(:, 6), 'b'); 
     title('Plot of 3rd and 6th Columns');
     legend('3rd Column', '6th Column');
     xlabel('Index');
@@ -1175,70 +984,52 @@ end
 
 
 function match = displaySummaryWithRealClass(currentSubFolder, results, numClasses,net, real_datapoint)
-    % Extract the real class from the filename
     [real_class, minOverMeanRatio] = extract_failure_mode(currentSubFolder, results, numClasses);
-    real_class = real_class+ 1 %compensating for 0 indexing;
-    % Calculate summary data
+    real_class = real_class+ 1 
     summary_data = [(1:numClasses)', results.*1];
-    
-    % Find the index of the minimum MSE value
     [~, minIndex] = min(summary_data(:, 2));
-    
-    % Create a summary figure
     figure('Name', 'Summary Figure', 'NumberTitle', 'off');
-    
-    % Display the summary information
     summaryText = sprintf('Real Class: %d\nLowest MSE Class: %d\nMatch: %s \nPred quality %d \nAI pred %d', ...
                            real_class, minIndex, ...
                           logical(real_class == minIndex),...
                           minOverMeanRatio,...
                           double(classify(net, real_datapoint(200:end,1:6)')));
     match =(real_class == minIndex);
-    % Display text in the figure
     annotation('textbox', [0.1, 0.5, 0.8, 0.3], 'String', summaryText, 'FontSize', 12, ...
                'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle', 'EdgeColor', 'none');
 end
 
 
 function [real_class, minOverNextRatio] = extract_failure_mode(currentSubFolder, results, numClasses)
-    % Extract the filename from the full path
     [~, fileName, ~] = fileparts(currentSubFolder);
-
-    % Initialize the real_class variable
-    real_class = NaN;  % Use NaN as default in case no match is found
-
-    % Define regular expression patterns for different failure modes
+    real_class = NaN;  
     patternNoFail = '^\d+nofail_traj\d+$';
     patternStuck = '^\d+stuck_motor(\d+)traj\d+$';
     patternSteady = '^\d+steady_motor(\d+)traj\d+$';
-
-    % Check for nofail pattern
     if ~isempty(regexp(fileName, patternNoFail, 'once'))
         real_class = 0; % nofail = failure mode 0
 
-    % Check for stuck motor pattern
     elseif ~isempty(regexp(fileName, patternStuck, 'once'))
-        % Extract the motor number from the filename
+
         tokens = regexp(fileName, patternStuck, 'tokens');
         motorNumber = str2double(tokens{1}{1});
-        real_class = motorNumber; % stuck motor X = failure mode X
+        real_class = motorNumber; 
 
-    % Check for steady motor pattern
     elseif ~isempty(regexp(fileName, patternSteady, 'once'))
-        % Extract the motor number from the filename
+       
         tokens = regexp(fileName, patternSteady, 'tokens');
         motorNumber = str2double(tokens{1}{1});
-        real_class = motorNumber + 4; % steady motor X = failure mode X + 4
+        real_class = motorNumber + 4; 
     end
 
-    % Compute the minimum and next smallest values of the results
+   
     sortedResults = sort(results);
-    minMSE = sortedResults(1); % Smallest MSE
-    nextMinMSE = sortedResults(2); % Second smallest MSE
+    minMSE = sortedResults(1); 
+    nextMinMSE = sortedResults(2); 
 
-    % Compute the ratio of the minimum to the next smallest
+    
     minOverNextRatio = minMSE / nextMinMSE;
 
-    % Display the real class and ratio for debugging
+   
     fprintf('File: %s, Real Class: %d, Min/Next Min Ratio: %.2f\n', fileName, real_class, minOverNextRatio);
 end
