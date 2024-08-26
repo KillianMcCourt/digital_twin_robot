@@ -1,14 +1,16 @@
 
 
 %This function uses real provided data (command and response trajectory) in
-%order to 1 - adapt for use with our AI models (real_datapoint output) and 
-% 2- generate a simulated response to the real command, allowing direct
-% comparison to the real datapoint in order to access digital twin
-% accuracy.
+%order to :
+% 1- make predictions using DTW. Activate displays to see the recap responses for each point,as well as recap tables
+% for each trajectory in the provided folder
+%2 - save the simulations as two cell datasets, one with the real reponses,
+%the other with the simulated responses. Both of these can be used to
+%either train or evaluate saved models
 
 
 %% activate all displays (command & real response before processing; command, real & simulated responses after processing
-displays = false;
+displays = true;
 %%
 
 
@@ -131,17 +133,7 @@ end
 
         disp("com graphing")
 
-        figure;
-        subplot(2, 1, 1); 
-        plot(com_motor_6)
-        subplot(2, 1, 2); 
-        plot(mov_6)
 
-        figure;
-        subplot(2, 1, 1); 
-        plot(com_motor_5)
-        subplot(2, 1, 2); 
-        plot(mov_5)
        
          end
 
@@ -416,7 +408,7 @@ joint5_ts = joint_ts{5};
             disp(prediction_real)
             prediction_simulated= net.predict(simulated_datapoint');
             simulated_dataset = [simulated_dataset, simulated_datapoint];
-            simulated_cell_dataset{end + 1} = simulated_datapoint;
+            simulated_cell_dataset{end + 1} = simulated_datapoint';
 
             [index_real, index_simulated] = getPredictionIndexes(real_datapoint, simulated_datapoint, net);
 
@@ -538,7 +530,7 @@ dtw_total = dtw_dist_x + dtw_dist_y + dtw_dist_z;
 end
 real_dataset = [real_dataset, real_datapoint];
 
-real_cell_dataset{end+1} = real_datapoint;
+real_cell_dataset{end+1} = real_datapoint';
 [~, indexOfMin] = min(results);
 [~, indexOfMinMotor] = min(results_motorwise);
 disp("Motorwise pred")
