@@ -1,4 +1,4 @@
-#General Repository information
+# General Repository information
 
 This Github repository contains the codebase for the paper (LINK HERE).
 
@@ -11,6 +11,7 @@ it can be seperated into in two sections :
 This repository also contains sample datasets for both real trajectories captured on the robot, provided as per the capture code (with seperated command, duration and response position .csv files); and simulated data, provided as 3D coordinates for both command and response trajectories. These are correctly formatted to interact with our codes in the "ik_model" section, and may be used to either replicate our results, or as a reference to develop alterantive training and evaluation codes.
 
 ## Further information
+
 Please address any questions regarding the repository to:
 killian.mccourt@free.fr
 
