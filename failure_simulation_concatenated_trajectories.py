@@ -233,20 +233,7 @@ if __name__ == '__main__':
     durations_lists = np.vstack(all_durations)
     total_rows = trajectories.shape[0]
     print("len trajectories", len(trajectories))
-    """
-    trajectories = [[500, 500, 500, 500, 500, 500],
-                    [500, 482, 247, 624, 353, 100], 
-                    [500, 482, 247, 624, 353, 350],
-                    [500, 482, 247, 624, 353, 600],
-                    [500, 482, 247, 624, 353, 850]]
-    
-  
-    durations_lists = [[1000, 1000, 1000, 1000, 1000, 1000], 
-                       [1000, 1000, 1000, 1000, 1000, 1000], 
-                       [1000, 1000, 1000, 1000, 1000, 1000],
-                       [1000, 1000, 1000, 1000, 1000, 1000],
-                       [1000, 1000, 1000, 1000, 1000, 1000]]
-    """
+
   
     
     failed_trajectories = np.arange(1, total_rows + 1)
@@ -259,7 +246,8 @@ if __name__ == '__main__':
     for i in range(0, total_rows,  sequence_length):
         value = pattern[(i // sequence_length) % pattern_length]
        
-        
+    #given that motor failure is point by point, applying this pattern serves to keep a given motor under failure for the duration of a trajectory.
+    #please not that because motor 1 (gripper) does not affect end-effector position, failing it equates to a "no fail" situation.
     mult_pattern = [1,1,1,1,1,1,1,6,6,6,6,6,1,1,5,5,5,5,5,1,1,4,4,4,4,4,1,1,3,3,3,3,3,1,1] 
     failed_trajectories = failed_trajectories.tolist()
     print("failed_trajectories", failed_trajectories)
@@ -267,17 +255,13 @@ if __name__ == '__main__':
     print("failed_motors", failed_motors)
 
     
-    # Define the failure simulators.
-    # Motor 1 in trajectory 1: Stuck.
-    # Motor 5 in trajectory 1: Steady state error with error factor 10.
-    # Motor 6 in trajectory 5: Steady state error with error factor 100.
-##    failure_types =[StuckSimulator(), SpeedDegradationSimulator(percentage_loss=60), SteadyStateErrorSimulator(error_factor=150),SteadyStateErrorSimulator(error_factor=0)]   #SpeedDegradationSimulator(percentage_loss=60)
-##    failure_simulators = [failure_types[failure_type]] * len(failed_trajectories)
-    
-##    failure_simulators = [StuckSimulator()]*total_rows
+
     
     failure_simulators = []
+    #The contents of failure simulation define what failures with occur. currently code is set up  for random value steayd state failure. Repalcing it with either of the other failure classes,
+    #as named at the start of this document, will cause the respective other failure instead.
     for _ in range(int(total_rows/7)):
+        #we define a steady-state failure value for each trajectory (5 points + 2 transition points, so length of 7)
         a = random.uniform(0.15, 0.35) * random.choice([-1,1])
         failure_simulators.append(SteadyStateErrorSimulator(error_factor=a))
         failure_simulators.append(SteadyStateErrorSimulator(error_factor=a))
