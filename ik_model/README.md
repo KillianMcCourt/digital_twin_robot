@@ -12,7 +12,6 @@ The "multi_model_dataset_builder.m" and "test_main_final.m" files are two differ
 
 ## AI training and predictions
 
-### AI training files
 
 ### DTW multi-simulation evaulation
 
